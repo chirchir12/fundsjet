@@ -50,6 +50,8 @@ defmodule Fundsjet.Identity do
 
   """
   def create_user(attrs \\ %{}) do
+    attrs = Map.put_new(attrs, "email_verified", false)
+    attrs = Map.put_new(attrs, "is_active", true)
     %User{}
     |> User.changeset(attrs)
     |> Repo.insert()

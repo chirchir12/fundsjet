@@ -14,10 +14,17 @@ defmodule FundsjetWeb.Router do
     plug :accepts, ["json"]
   end
 
-  scope "/", FundsjetWeb do
-    pipe_through :browser
+  pipeline :auth do
+  end
 
-    get "/", PageController, :home
+  scope "/v1/users", FundsjetWeb do
+    pipe_through [:api]
+
+    post "/", UserController, :create
+    get "/", UserController, :index
+    get "/:id", UserController, :show
+    put "/:id", UserController, :update
+    delete "/:id", UserController, :delete
   end
 
   # Other scopes may use custom stacks.

@@ -17,7 +17,6 @@ defmodule Fundsjet.Identity.User do
     :email_verified
   ]
   @required [
-    :uuid,
     :username,
     :email,
     :type,
@@ -25,7 +24,6 @@ defmodule Fundsjet.Identity.User do
     :last_name,
     :primary_phone,
     :is_active,
-    :password,
     :email_verified
   ]
 
@@ -57,6 +55,7 @@ defmodule Fundsjet.Identity.User do
     |> unique_constraint(:username)
     |> put_downcased_email()
     |> maybe_put_uuid()
+    |> put_password_hash()
   end
 
   defp maybe_validate_password(changeset) do
@@ -87,4 +86,10 @@ defmodule Fundsjet.Identity.User do
   end
 
   defp maybe_put_uuid(changeset), do: changeset
+
+  defp put_password_hash(%Ecto.Changeset{valid?: true, changes: %{password: pass}} = changeset) do
+    changeset |> put_change(:password_hash, Argon2.hash_pwd_salt(pass))
+  end
+
+  defp put_password_hash(changeset), do: changeset
 end

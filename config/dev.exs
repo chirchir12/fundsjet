@@ -22,7 +22,7 @@ config :fundsjet, FundsjetWeb.Endpoint,
   http: [ip: {127, 0, 0, 1}, port: 4000],
   check_origin: false,
   code_reloader: true,
-  debug_errors: true,
+  debug_errors: false,
   secret_key_base: "sM+HaieLL7JxpFjS1gHPXKRddnBU3U5u7h7v5XqtED6/L5xp3/PdeEbF3jSY91br",
   watchers: [
     esbuild: {Esbuild, :install_and_run, [:fundsjet, ~w(--sourcemap=inline --watch)]},
