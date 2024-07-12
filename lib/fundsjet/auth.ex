@@ -1,8 +1,8 @@
-defmodule Fundsjet.Auth do
+defmodule Fundsjet.Identity.Auth do
   alias Fundsjet.Identity
   alias Fundsjet.Identity.User
-  alias Fundsjet.Auth.Login
-  alias Fundsjet.Guardian
+  alias Fundsjet.Identity.Auth.Login
+  alias Fundsjet.Identity.Guardian
 
   def login(email, plain_text_password) do
     with {:ok, %Ecto.Changeset{changes: %{email: email, password: pass}}} <-
@@ -73,7 +73,7 @@ defmodule Fundsjet.Auth do
 
   defp get_ttl_opt(:access) do
     :fundsjet
-    |> Application.get_env(Fundsjet.Guardian)
+    |> Application.get_env(Fundsjet.Identity.Guardian)
     |> Keyword.get(:tokens)
     |> Keyword.get(:access)
     |> Keyword.get(:ttl)
@@ -81,7 +81,7 @@ defmodule Fundsjet.Auth do
 
   defp get_ttl_opt(:refresh) do
     :fundsjet
-    |> Application.get_env(Fundsjet.Guardian)
+    |> Application.get_env(Fundsjet.Identity.Guardian)
     |> Keyword.get(:tokens)
     |> Keyword.get(:refresh)
     |> Keyword.get(:ttl)

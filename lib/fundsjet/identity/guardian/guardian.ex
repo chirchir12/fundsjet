@@ -1,4 +1,4 @@
-defmodule Fundsjet.Guardian do
+defmodule Fundsjet.Identity.Guardian do
   use Guardian, otp_app: :fundsjet
   alias Fundsjet.Identity
   alias Fundsjet.Identity.User

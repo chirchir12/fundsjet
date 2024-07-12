@@ -1,4 +1,4 @@
-defmodule Fundsjet.Auth.Login do
+defmodule Fundsjet.Identity.Auth.Login do
   use Ecto.Schema
   import Ecto.Changeset
 

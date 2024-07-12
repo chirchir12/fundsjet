@@ -5,7 +5,6 @@ defmodule Fundsjet.Identity do
 
   import Ecto.Query, warn: false
   alias Fundsjet.Repo
-
   alias Fundsjet.Identity.User
 
   @doc """
@@ -122,6 +121,7 @@ defmodule Fundsjet.Identity do
   def get_user_by!(oid, :uuid) do
     Repo.get_by!(User, oid: oid)
   end
+
   def get_user_by!(email, :email) do
     Repo.get_by!(User, email: email)
   end

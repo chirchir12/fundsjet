@@ -17,14 +17,23 @@ defmodule FundsjetWeb.Router do
   pipeline :auth do
   end
 
-  scope "/v1/users", FundsjetWeb do
+  scope("/v1", FundsjetWeb) do
     pipe_through [:api]
 
-    post "/", UserController, :create
-    get "/", UserController, :index
-    get "/:id", UserController, :show
-    put "/:id", UserController, :update
-    delete "/:id", UserController, :delete
+    post "/auth/login", AuthController, :login
+    post "/auth/register", AuthController, :register
+
+    post "/auth/token/renew", AuthController, :refresh_token
+    post "/auth/token/revoke", AuthController, :revoke_refresh_token
+  end
+
+  scope "/v1/", FundsjetWeb do
+    pipe_through [:api, :auth]
+
+    get "/users", UserController, :index
+    get "/users/:id", UserController, :show
+    put "/users/:id", UserController, :update
+    delete "/users/:id", UserController, :delete
   end
 
   # Other scopes may use custom stacks.
