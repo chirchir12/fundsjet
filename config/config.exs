@@ -61,6 +61,31 @@ config :logger, :console,
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
 
+# setup guardian
+config :fundsjet, Fundsjet.Guardian,
+  issuer: "fundsjet",
+  secret_key: System.get_env("AUTH_SECRET", "secret_key"),
+  tokens: [
+    access: [
+      ttl: {15, :minutes}
+    ],
+    refresh: [
+      ttl: {1, :day}
+    ]
+  ]
+
+# setup gurdian db
+config :guardian, Guardian.DB,
+  # Add your repository module
+  repo: Fundsjet.Repo,
+  # default
+  schema_name: "guardian_tokens",
+  # store all token types if not set
+  token_types: ["refresh"],
+  # default: 60 minutes
+  sweep_interval: 60
+
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
+
 import_config "#{config_env()}.exs"

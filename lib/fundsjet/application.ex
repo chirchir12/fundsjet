@@ -17,6 +17,7 @@ defmodule Fundsjet.Application do
       # Start a worker by calling: Fundsjet.Worker.start_link(arg)
       # {Fundsjet.Worker, arg},
       # Start to serve requests, typically the last entry
+      {Guardian.DB.Token.SweeperServer, []},
       FundsjetWeb.Endpoint
     ]
 
