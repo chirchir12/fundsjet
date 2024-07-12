@@ -14,7 +14,12 @@ defmodule FundsjetWeb.Router do
     plug :accepts, ["json"]
   end
 
-  pipeline :auth do
+  pipeline :maybe_auth do
+    plug FundsjetWeb.Pipelines.MybeAuthPipeline
+  end
+
+  pipeline :require_auth do
+    plug FundsjetWeb.Pipelines.EnsureAuthPipeline
   end
 
   scope("/v1", FundsjetWeb) do
@@ -28,7 +33,7 @@ defmodule FundsjetWeb.Router do
   end
 
   scope "/v1/", FundsjetWeb do
-    pipe_through [:api, :auth]
+    pipe_through [:api, :maybe_auth, :require_auth]
 
     get "/users", UserController, :index
     get "/users/:id", UserController, :show

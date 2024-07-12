@@ -118,8 +118,8 @@ defmodule Fundsjet.Identity do
     iex> get_user!(456)
       ** (Ecto.NoResultsError)
   """
-  def get_user_by!(oid, :uuid) do
-    Repo.get_by!(User, oid: oid)
+  def get_user_by!(uuid, :uuid) do
+    Repo.get_by!(User, uuid: uuid)
   end
 
   def get_user_by!(email, :email) do
