@@ -41,6 +41,7 @@ defmodule Fundsjet.Identity.User do
     field :email_verified, :boolean
 
     timestamps(type: :utc_datetime)
+    has_one :customer, Fundsjet.Customers.Customer
   end
 
   @doc false
