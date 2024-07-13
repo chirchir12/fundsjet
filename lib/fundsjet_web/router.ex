@@ -51,6 +51,8 @@ defmodule FundsjetWeb.Router do
     get "/products/:id", ProductController, :show
     put "/products/:id", ProductController, :update
     delete "/products/:id", ProductController, :delete
+
+    post "/products/:product_id/configuration", ProductController, :create_configuration
   end
 
   # Other scopes may use custom stacks.

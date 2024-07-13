@@ -1,5 +1,6 @@
 defmodule FundsjetWeb.ProductJSON do
   alias Fundsjet.Products.Product
+  alias Fundsjet.Products.Configuration
 
   @doc """
   Renders a list of products.
@@ -8,11 +9,20 @@ defmodule FundsjetWeb.ProductJSON do
     %{data: for(product <- products, do: data(product))}
   end
 
+  def index(%{configs: configs}) do
+    %{data: for(config <- configs, do: data(config))}
+  end
+
+
   @doc """
   Renders a single product.
   """
   def show(%{product: product}) do
     %{data: data(product)}
+  end
+
+  def show(%{config: config}) do
+    %{data: data(config)}
   end
 
   defp data(%Product{} = product) do
@@ -32,6 +42,15 @@ defmodule FundsjetWeb.ProductJSON do
       approval_meta: product.approval_meta,
       documents_meta: product.documents_meta,
       additional_info: product.additional_info
+    }
+  end
+
+  defp data(%Configuration{} = config) do
+    %{
+      product_id: config.product_id,
+      name: config.name,
+      value: config.value,
+      description: config.description
     }
   end
 end

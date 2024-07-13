@@ -2,7 +2,6 @@ defmodule Fundsjet.Products.Product do
   use Ecto.Schema
   import Ecto.Changeset
 
-
   @permitted [
     :code,
     :name,
@@ -24,7 +23,6 @@ defmodule Fundsjet.Products.Product do
     :name,
     :require_approval,
     :require_docs
-
   ]
 
   schema "products" do
@@ -44,6 +42,7 @@ defmodule Fundsjet.Products.Product do
     field :additional_info, :map
 
     timestamps(type: :utc_datetime)
+    has_many :configuration, Fundsjet.Products.Configuration
   end
 
   @doc false

@@ -101,4 +101,9 @@ defmodule Fundsjet.Products do
   def change_product(%Product{} = product, attrs \\ %{}) do
     Product.changeset(product, attrs)
   end
+
+  def product_exists?(product_code) do
+    query = from p in Product, where: p.code == ^ product_code
+    Repo.exists?(query)
+  end
 end

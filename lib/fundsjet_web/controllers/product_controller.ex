@@ -5,6 +5,7 @@ defmodule FundsjetWeb.ProductController do
   alias Fundsjet.Products.Product
   alias Fundsjet.Identity.GuardianHelper
   alias Fundsjet.Identity.User
+  alias Fundsjet.Products.Cofigurations
 
   action_fallback FundsjetWeb.FallbackController
 
@@ -17,6 +18,7 @@ defmodule FundsjetWeb.ProductController do
     IO.inspect(product_params)
     {:ok, %User{id: current_user_id}} = GuardianHelper.get_current_user(conn)
     product_params = Map.put_new(product_params, "created_by", current_user_id)
+
     with {:ok, %Product{} = product} <- Products.create_product(product_params) do
       conn
       |> put_status(:created)
@@ -44,6 +46,14 @@ defmodule FundsjetWeb.ProductController do
 
     with {:ok, %Product{}} <- Products.delete_product(product) do
       send_resp(conn, :no_content, "")
+    end
+  end
+
+  def create_configuration(conn, %{"product_id" => product_id, "config"=> config_params}) do
+    # todo handle cases where this throw an error
+    config_params = Enum.map(config_params, fn config -> Map.put_new(config, "product_id", product_id) end )
+    with configs <- Cofigurations.create_configurations(config_params) do
+      render(conn, :index, configs: configs)
     end
   end
 end
