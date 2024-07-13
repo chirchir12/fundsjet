@@ -25,7 +25,6 @@ defmodule Fundsjet.Customers.Customer do
     :is_enabled
   ]
 
-
   schema "customers" do
     field :customer_number, :string
     field :uuid, Ecto.UUID
@@ -48,10 +47,7 @@ defmodule Fundsjet.Customers.Customer do
     |> validate_required(@required)
     |> maybe_put_uuid()
     |> put_downcased_email()
-
   end
-
-
 
   defp maybe_put_uuid(%Ecto.Changeset{valid?: true} = changeset) do
     if changeset.data.id do
@@ -63,10 +59,12 @@ defmodule Fundsjet.Customers.Customer do
       end
     end
   end
+
   defp maybe_put_uuid(changeset), do: changeset
 
   defp put_downcased_email(%Ecto.Changeset{valid?: true, changes: %{email: email}} = changeset) do
     changeset |> put_change(:email, email |> String.downcase())
   end
+
   defp put_downcased_email(changeset), do: changeset
 end
