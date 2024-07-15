@@ -11,17 +11,23 @@ services:
       context: .
     environment:
       # Variables to connect to our Postgres server.
+      DATABASE_URL: postgres://postgres:postgres@db:5432/postgres
       DB_USER: postgres
       DB_PASS: postgres
       DB_NAME: postgres
-      DB_PORT: 54321
+      DB_PORT: 5432
       DB_HOST: db
+      PHX_SERVER: true
+      PHX_HOST: 0.0.0.0
+      SECRET_KEY_BASE: wZ2LZxcKq3d2UkJMQEyvwB/WLCsKnDUgcwPFwulU3z8ofrUWLGfeFqR84iwjzgd3
     ports:
       # Mapping the port to make the Phoenix app accessible outside of the container.
       - "4000:4000"
     depends_on:
       # The DB container needs to be started before we start this container.
       - db
+    networks:
+      - funds_jet_net
   db:
     # We use the predefined Postgres image.
     image: postgres:14.12
@@ -33,10 +39,12 @@ services:
       # Set a path where Postgres should store the data.
       PGDATA: /var/lib/postgresql/data/pgdata
     restart: always
-    ports:
-      - "54321:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    networks:
+      - funds_jet_net
 # Define the volumes.
 volumes:
   pgdata:
+networks:
+  funds_jet_net:
