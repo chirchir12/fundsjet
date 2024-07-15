@@ -2,10 +2,11 @@ import Config
 
 # Configure your database
 config :fundsjet, Fundsjet.Repo,
-  username: "fundsjet_dev",
-  password: "fundsjet_dev",
-  hostname: "localhost",
-  database: "fundsjet_dev",
+  username: System.get_env("DB_USER", "fundsjet_dev"),
+  password: System.get_env("DB_PASS", "fundsjet_dev"),
+  hostname: System.get_env("DB_HOST", "localhost"),
+  database: System.get_env("DB_NAME", "fundsjet_dev"),
+  port: System.get_env("DB_PORT", "5432") |> String.to_integer(),
   stacktrace: true,
   show_sensitive_data_on_connection_error: true,
   pool_size: 10
