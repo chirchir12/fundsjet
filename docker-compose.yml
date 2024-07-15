@@ -11,9 +11,9 @@ services:
       context: .
     environment:
       # Variables to connect to our Postgres server.
-      DB_USER: fundsjet_dev
-      DB_PASS: fundsjet_dev
-      DB_NAME: fundsjet_dev
+      DB_USER: postgres
+      DB_PASS: postgres
+      DB_NAME: postgres
       DB_PORT: 54321
       DB_HOST: db
     ports:
@@ -24,12 +24,12 @@ services:
       - db
   db:
     # We use the predefined Postgres image.
-    image: postgres:14:12
+    image: postgres:14.12
     environment:
       # Set user/password for Postgres.
-      POSTGRES_USER: fundsjet_dev
-      POSTGRES_PASSWORD: fundsjet_dev
-      POSTGRES_DB: fundsjet_dev
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
       # Set a path where Postgres should store the data.
       PGDATA: /var/lib/postgresql/data/pgdata
     restart: always

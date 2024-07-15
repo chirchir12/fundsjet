@@ -1,16 +1,30 @@
 # ./Dockerfile
 
 # Extend from the official Elixir image.
-FROM elixir:latest
+FROM elixir:1.14-otp-25
 
-# Create app directory and copy the Elixir projects into it.
-RUN mkdir /app
-COPY . /app
+RUN mkdir -p /app
 WORKDIR /app
+COPY . /paygate/
 
 # Install Hex package manager.
 # By using `--force`, we don’t need to type “Y” to confirm the installation.
-RUN mix local.hex --force
+# Install hex + rebar
+RUN mix local.hex --force && \
+    mix local.rebar --force
 
-# Compile the project.
-RUN mix do compile
+
+# Install mix dependencies
+RUN mix deps.get
+RUN mix deps.compile
+
+# Copy the rest of the application code
+COPY . .
+
+RUN mix deps.compile
+
+
+# Expose port
+EXPOSE 4000
+
+CMD ["/app/entrypoint.sh"]
