@@ -3,7 +3,6 @@ defmodule Fundsjet.Products.Cofigurations do
   alias Fundsjet.Repo
   import Ecto.Query
 
-
   @doc """
   Create configuration.
 
@@ -39,12 +38,11 @@ defmodule Fundsjet.Products.Cofigurations do
     %Configuration{}
     |> Configuration.changeset(param)
     |> Repo.insert()
-    |> case  do
-     {:ok, config}  ->
+    |> case do
+      {:ok, config} ->
         config
     end
   end
 
   # todo delete configurations bulk or single
-
 end

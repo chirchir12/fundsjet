@@ -38,6 +38,7 @@ defmodule Fundsjet.Customers.Customer do
     field :is_enabled, :boolean
     timestamps(type: :utc_datetime)
     belongs_to :user, Fundsjet.Identity.User
+    has_many :loans, Fundsjet.Loans.Loan
   end
 
   @doc false

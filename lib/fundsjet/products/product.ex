@@ -43,6 +43,7 @@ defmodule Fundsjet.Products.Product do
 
     timestamps(type: :utc_datetime)
     has_many :configuration, Fundsjet.Products.Configuration
+    has_many :loans, Fundsjet.Loans.Loan
   end
 
   @doc false

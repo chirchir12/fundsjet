@@ -9,7 +9,7 @@ defmodule Fundsjet.Repo.Migrations.CreateConfiguration do
       add :description, :string, null: false
       timestamps(type: :utc_datetime)
     end
+
     create unique_index(:configuration, [:name, :product_id])
   end
-
 end

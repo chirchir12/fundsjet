@@ -103,7 +103,7 @@ defmodule Fundsjet.Products do
   end
 
   def product_exists?(product_code) do
-    query = from p in Product, where: p.code == ^ product_code
+    query = from p in Product, where: p.code == ^product_code
     Repo.exists?(query)
   end
 end

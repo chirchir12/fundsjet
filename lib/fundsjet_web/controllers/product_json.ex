@@ -13,7 +13,6 @@ defmodule FundsjetWeb.ProductJSON do
     %{data: for(config <- configs, do: data(config))}
   end
 
-
   @doc """
   Renders a single product.
   """
