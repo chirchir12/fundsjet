@@ -15,6 +15,5 @@ defmodule Fundsjet.Repo.Migrations.CreateLoanRepayment do
       add :meta, :map
       timestamps(type: :utc_datetime)
     end
-
   end
 end

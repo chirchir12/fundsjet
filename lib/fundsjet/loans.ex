@@ -4,8 +4,10 @@ defmodule Fundsjet.Loans do
   """
 
   import Ecto.Query, warn: false
+  alias Fundsjet.Customers.Customer
   alias Fundsjet.Repo
-
+  alias Fundsjet.Products
+  alias Fundsjet.Customers
   alias Fundsjet.Loans.Loan
 
   @doc """
@@ -50,8 +52,34 @@ defmodule Fundsjet.Loans do
 
   """
   def create_loan(attrs \\ %{}) do
+    # todo check is customer is not enabled and throw
+    customer_uuid = Map.get(attrs, "customer_id")
+    amount = Map.get(attrs, "amount")
+    %Customer{id: customer_id} = Customers.get_customer_by!(:uuid, customer_uuid)
+    product = Products.get_product_by!(:code, "loanProduct")
+    configuration = Products.get_configuration(product.configuration)
+
+    loan_attrs = %{
+      amount: amount,
+      customer_id: customer_id,
+      product_id: product.id,
+      commission:
+        calc_commission(
+          configuration["commissionType"].value,
+          configuration["loanComission"].value,
+          amount
+        ),
+      maturity_date: calc_loan_maturity(configuration["loanDuration"].value),
+      duration: String.to_integer(configuration["loanDuration"].value),
+      status: calc_status(product.require_approval),
+      term: String.to_integer(configuration["loanTerm"].value),
+      disbursed_on: calc_disbursed_on(product.require_approval),
+      created_by: Map.get(attrs, "created_by")
+    }
+    IO.inspect(loan_attrs)
+
     %Loan{}
-    |> Loan.changeset(attrs)
+    |> Loan.changeset(loan_attrs)
     |> Repo.insert()
   end
 
@@ -100,5 +128,41 @@ defmodule Fundsjet.Loans do
   """
   def change_loan(%Loan{} = loan, attrs \\ %{}) do
     Loan.changeset(loan, attrs)
+  end
+
+  defp calc_commission(type, value, amount) do
+    case type do
+      "percent" ->
+        1 / 100 * String.to_integer(value) * amount
+
+      "flat" ->
+        String.to_integer(value)
+    end
+  end
+
+  defp calc_loan_maturity(duration, today \\ Date.utc_today()) do
+    Date.add(today, String.to_integer(duration))
+  end
+
+  defp calc_disbursed_on(require_approval) do
+    case require_approval do
+      true ->
+        nil
+
+      false ->
+        Date.utc_today()
+    end
+  end
+
+  defp calc_status(require_approval) do
+    case require_approval do
+      true ->
+        "pending"
+
+      false ->
+        "disbursed"
+    end
+
+    "pending"
   end
 end

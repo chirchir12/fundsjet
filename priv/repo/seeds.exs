@@ -22,8 +22,8 @@ if Keyword.get(config, :loan_product) and !Fundsjet.Products.product_exists?("lo
       # todo get from env
       currency: "KES",
       is_enabled: true,
-      require_approval: false,
-      require_docs: false
+      require_approval: true,
+      require_docs: true
     }
     |> Fundsjet.Products.create_product()
 
@@ -44,6 +44,12 @@ if Keyword.get(config, :loan_product) and !Fundsjet.Products.product_exists?("lo
       name: "loanComission",
       value: "10",
       description: "Loan commission",
+      product_id: product_id
+    },
+    %{
+      name: "loanTerm",
+      value: "1",
+      description: "Loan Term for Repayment schedul",
       product_id: product_id
     },
     %{

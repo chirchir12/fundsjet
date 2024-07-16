@@ -7,6 +7,7 @@ defmodule Fundsjet.Products do
   alias Fundsjet.Repo
 
   alias Fundsjet.Products.Product
+  alias Fundsjet.Products.Configuration
 
   @doc """
   Returns the list of products.
@@ -105,5 +106,24 @@ defmodule Fundsjet.Products do
   def product_exists?(product_code) do
     query = from p in Product, where: p.code == ^product_code
     Repo.exists?(query)
+  end
+
+  def get_product_by!(:code, code) do
+    product = Repo.get_by!(Product, code: code)
+    product = Repo.preload(product, :configuration)
+    product
+  end
+
+  def get_configuration(list_configs) when length(list_configs) > 0 do
+    Enum.reduce(list_configs, %{}, &reduce_config/2)
+  end
+
+  def get_configuration(_) do
+    %{}
+  end
+
+  defp reduce_config(%Configuration{name: name} = config, acc) do
+    acc = Map.put_new(acc, name, config)
+    acc
   end
 end

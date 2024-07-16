@@ -3,6 +3,8 @@ defmodule FundsjetWeb.LoanController do
 
   alias Fundsjet.Loans
   alias Fundsjet.Loans.Loan
+  alias Fundsjet.Identity.GuardianHelper
+  alias Fundsjet.Identity.User
 
   action_fallback FundsjetWeb.FallbackController
 
@@ -12,6 +14,9 @@ defmodule FundsjetWeb.LoanController do
   end
 
   def create(conn, %{"loan" => loan_params}) do
+    {:ok, %User{id: current_user_id}} = GuardianHelper.get_current_user(conn)
+    loan_params = Map.put_new(loan_params, "created_by", current_user_id)
+
     with {:ok, %Loan{} = loan} <- Loans.create_loan(loan_params) do
       conn
       |> put_status(:created)

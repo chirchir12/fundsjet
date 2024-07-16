@@ -29,10 +29,7 @@ defmodule Fundsjet.Loans.Loan do
     :duration,
     :status,
     :term,
-    :disbursed_on,
-    :created_by,
-    :updated_by,
-    :meta
+    :created_by
   ]
 
   schema "loans" do

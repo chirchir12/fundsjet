@@ -15,7 +15,6 @@ defmodule FundsjetWeb.ProductController do
   end
 
   def create(conn, %{"product" => product_params}) do
-    IO.inspect(product_params)
     {:ok, %User{id: current_user_id}} = GuardianHelper.get_current_user(conn)
     product_params = Map.put_new(product_params, "created_by", current_user_id)
 

@@ -12,7 +12,7 @@ defmodule Fundsjet.Repo.Migrations.CreateLoans do
       add :uuid, :uuid, null: false
       add :duration, :integer, null: false
       add :term, :integer, null: false
-      add :disbursed_on, :date, null: false
+      add :disbursed_on, :date, null: true
       add :closed_on, :date
       add :created_by, :integer, null: false
       add :updated_by, :integer

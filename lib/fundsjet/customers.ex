@@ -103,4 +103,8 @@ defmodule Fundsjet.Customers do
   def change_customer(%Customer{} = customer, attrs \\ %{}) do
     Customer.changeset(customer, attrs)
   end
+
+  def get_customer_by!(:uuid, uuid) do
+    Repo.get_by!(Customer, uuid: uuid)
+  end
 end
