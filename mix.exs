@@ -60,8 +60,7 @@ defmodule Fundsjet.MixProject do
       {:bandit, "~> 1.2"},
       {:argon2_elixir, "~> 4.0"},
       {:guardian, "~> 2.3"},
-      {:guardian_db, "~> 2.0"},
-      {:distillery, "~> 2.0"}
+      {:guardian_db, "~> 2.0"}
     ]
   end
 
