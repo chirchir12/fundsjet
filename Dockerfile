@@ -86,6 +86,7 @@ ENV MIX_ENV="prod"
 
 # Only copy the final release from the build stage
 COPY --from=builder --chown=nobody:root /app/_build/${MIX_ENV}/rel/fundsjet ./
+COPY --from=builder --chown=nobody:root /app/priv ./bin/priv
 
 USER nobody
 
@@ -94,5 +95,5 @@ USER nobody
 # above and adding an entrypoint. See https://github.com/krallin/tini for details
 # ENTRYPOINT ["/tini", "--"]
 
-CMD ["/bin/sh", "-c", "/app/bin/migrate && /app/bin/server"]
+CMD ["/bin/sh", "-c", "/app/bin/migrate && /app/bin/seed && /app/bin/server"]
 # CMD ["sh", "-c", "bin/app eval Fundsjet.Release.migrate && bin/app start"]
