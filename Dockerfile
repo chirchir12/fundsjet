@@ -97,4 +97,4 @@ USER nobody
 
 # CMD ["/bin/sh", "-c", "/app/bin/migrate && /app/bin/seed && /app/bin/server"]
 # CMD ["sh", "-c", "bin/app eval Fundsjet.Release.migrate && bin/app start"]
-CMD ["/app/bin/server""]
+CMD ["/app/bin/server"]
