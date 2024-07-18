@@ -7,6 +7,7 @@ defmodule Fundsjet.Loans do
   alias Fundsjet.Customers.Customer
   alias Fundsjet.Repo
   alias Fundsjet.Products
+  alias Fundsjet.Products.Product
   alias Fundsjet.Customers
   alias Fundsjet.Loans.Loan
 
@@ -52,35 +53,18 @@ defmodule Fundsjet.Loans do
 
   """
   def create_loan(attrs \\ %{}) do
-    # todo check is customer is not enabled and throw
     customer_uuid = Map.get(attrs, "customer_id")
-    amount = Map.get(attrs, "amount")
-    %Customer{id: customer_id} = Customers.get_customer_by!(:uuid, customer_uuid)
-    product = Products.get_product_by!(:code, "loanProduct")
-    configuration = Products.get_configuration(product.configuration)
 
-    loan_attrs = %{
-      amount: amount,
-      customer_id: customer_id,
-      product_id: product.id,
-      commission:
-        calc_commission(
-          configuration["commissionType"].value,
-          configuration["loanComission"].value,
-          amount
-        ),
-      maturity_date: calc_loan_maturity(configuration["loanDuration"].value),
-      duration: String.to_integer(configuration["loanDuration"].value),
-      status: calc_status(product.require_approval),
-      term: String.to_integer(configuration["loanTerm"].value),
-      disbursed_on: calc_disbursed_on(product.require_approval),
-      created_by: Map.get(attrs, "created_by")
-    }
-    IO.inspect(loan_attrs)
-
-    %Loan{}
-    |> Loan.changeset(loan_attrs)
-    |> Repo.insert()
+    with %Customer{id: customer_id, is_enabled: true} <-
+           Customers.get_customer_by!(:uuid, customer_uuid),
+         product <- Products.get_product_by!(:code, "loanProduct"),
+         {:ok, nil, :customer_has_no_loan} <- get_loan_by(:customer_id, customer_id),
+         new_atrrs <- Map.put(attrs, "customer_id", customer_id),
+         loan_attrs <- create_loan_attrs(product, new_atrrs) do
+      %Loan{}
+      |> Loan.changeset(loan_attrs)
+      |> Repo.insert()
+    end
   end
 
   @doc """
@@ -128,6 +112,43 @@ defmodule Fundsjet.Loans do
   """
   def change_loan(%Loan{} = loan, attrs \\ %{}) do
     Loan.changeset(loan, attrs)
+  end
+
+  defp create_loan_attrs(%Product{} = product, attrs) do
+    amount = Map.get(attrs, "amount")
+    configuration = Products.get_configuration(product.configuration)
+
+    loan_attrs = %{
+      amount: amount,
+      customer_id: Map.get(attrs, "customer_id"),
+      product_id: product.id,
+      commission:
+        calc_commission(
+          configuration["commissionType"].value,
+          configuration["loanComission"].value,
+          amount
+        ),
+      maturity_date: calc_loan_maturity(configuration["loanDuration"].value),
+      duration: String.to_integer(configuration["loanDuration"].value),
+      status: calc_status(product.require_approval),
+      term: String.to_integer(configuration["loanTerm"].value),
+      disbursed_on: calc_disbursed_on(product.require_approval),
+      created_by: Map.get(attrs, "created_by")
+    }
+
+    loan_attrs
+  end
+
+  def get_loan_by(:customer_id, customer_id) do
+    query = from l in Loan, where: l.status != "paid" and l.customer_id == ^customer_id
+
+    case Repo.one(query) do
+      nil ->
+        {:ok, nil, :customer_has_no_loan}
+
+      loan ->
+        {:ok, loan, :customer_already_loan}
+    end
   end
 
   defp calc_commission(type, value, amount) do
