@@ -33,7 +33,7 @@ defmodule Fundsjet.Loans.Loan do
   ]
 
   schema "loans" do
-    field :uuid, Ecto.UUID, default: Ecto.UUID.generate()
+    field :uuid, Ecto.UUID
     field :amount, :decimal
     field :commission, :decimal
     field :maturity_date, :date
@@ -59,6 +59,20 @@ defmodule Fundsjet.Loans.Loan do
     loan
     |> cast(attrs, @permitted)
     |> validate_required(@required)
+    |> maybe_put_uuid()
     |> unique_constraint(:uuid)
   end
+
+  defp maybe_put_uuid(%Ecto.Changeset{valid?: true} = changeset) do
+    if changeset.data.id do
+      changeset
+    else
+      case get_field(changeset, :uuid) do
+        nil -> changeset |> put_change(:uuid, Ecto.UUID.generate())
+        _ -> changeset
+      end
+    end
+  end
+
+  defp maybe_put_uuid(changeset), do: changeset
 end
