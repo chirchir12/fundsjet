@@ -20,18 +20,18 @@ defmodule Fundsjet.Release do
 
   def seed do
     load_app()
+
     for repo <- repos() do
-      {:ok, _, _} = Ecto.Migrator.with_repo(repo, fn _repo ->
-        Code.eval_file("priv/repo/seeds.exs")
-      end)
+      {:ok, _, _} =
+        Ecto.Migrator.with_repo(repo, fn _repo ->
+          Code.eval_file("priv/repo/seeds.exs")
+        end)
     end
   end
 
   defp repos do
     Application.fetch_env!(@app, :ecto_repos)
   end
-
-
 
   defp load_app do
     Application.load(@app)

@@ -95,6 +95,5 @@ USER nobody
 # above and adding an entrypoint. See https://github.com/krallin/tini for details
 # ENTRYPOINT ["/tini", "--"]
 
-# CMD ["/bin/sh", "-c", "/app/bin/migrate && /app/bin/seed && /app/bin/server"]
+CMD ["/bin/sh", "-c", "/app/bin/migrate && /app/bin/seed && /app/bin/server"]
 # CMD ["sh", "-c", "bin/app eval Fundsjet.Release.migrate && bin/app start"]
-CMD ["/app/bin/server"]
