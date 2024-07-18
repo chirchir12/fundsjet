@@ -25,7 +25,6 @@ defmodule Fundsjet.Loans.Loan do
     :customer_id,
     :amount,
     :commission,
-    :maturity_date,
     :duration,
     :status,
     :term,

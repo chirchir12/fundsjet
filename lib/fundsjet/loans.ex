@@ -10,6 +10,7 @@ defmodule Fundsjet.Loans do
   alias Fundsjet.Products.Product
   alias Fundsjet.Customers
   alias Fundsjet.Loans.Loan
+  alias Fundsjet.Loans.LoanRepayment
 
   @doc """
   Returns the list of loans.
@@ -60,10 +61,9 @@ defmodule Fundsjet.Loans do
          product <- Products.get_product_by!(:code, "loanProduct"),
          {:ok, nil, :customer_has_no_loan} <- get_loan_by(:customer_id, customer_id),
          new_atrrs <- Map.put(attrs, "customer_id", customer_id),
-         loan_attrs <- create_loan_attrs(product, new_atrrs) do
-      %Loan{}
-      |> Loan.changeset(loan_attrs)
-      |> Repo.insert()
+         {:ok, loan} <- save_loan(product, new_atrrs),
+         {:ok, _repayment} <- save_repayment(loan, product) do
+      {:ok, loan}
     end
   end
 
@@ -114,6 +114,22 @@ defmodule Fundsjet.Loans do
     Loan.changeset(loan, attrs)
   end
 
+  defp save_loan(product, attrs) do
+    loan_attrs = create_loan_attrs(product, attrs)
+
+    %Loan{}
+    |> Loan.changeset(loan_attrs)
+    |> Repo.insert()
+  end
+
+  defp save_repayment(loan, product) do
+    repayment_attrs = create_loan_repayment_attrs(loan, product)
+
+    %LoanRepayment{}
+    |> LoanRepayment.changeset(repayment_attrs)
+    |> Repo.insert()
+  end
+
   defp create_loan_attrs(%Product{} = product, attrs) do
     amount = Map.get(attrs, "amount")
     configuration = Products.get_configuration(product.configuration)
@@ -128,7 +144,8 @@ defmodule Fundsjet.Loans do
           configuration["loanComission"].value,
           amount
         ),
-      maturity_date: calc_loan_maturity(configuration["loanDuration"].value),
+      maturity_date:
+        calc_loan_maturity(product.require_approval, configuration["loanDuration"].value),
       duration: String.to_integer(configuration["loanDuration"].value),
       status: calc_status(product.require_approval),
       term: String.to_integer(configuration["loanTerm"].value),
@@ -137,6 +154,21 @@ defmodule Fundsjet.Loans do
     }
 
     loan_attrs
+  end
+
+  defp create_loan_repayment_attrs(loan, %Product{} = product) do
+    repayment_attrs = %{
+      loan_id: loan.id,
+      installment_date: calc_installmet_date(product.require_approval, loan.maturity_date),
+      principal_amount: loan.amount,
+      commission: loan.commission,
+      penalty_fee: 0,
+      status: "pending",
+      next_penalty_date: calc_next_penalty_date(product.require_approval, loan.maturity_date),
+      penalty_count: 0
+    }
+
+    repayment_attrs
   end
 
   def get_loan_by(:customer_id, customer_id) do
@@ -161,8 +193,14 @@ defmodule Fundsjet.Loans do
     end
   end
 
-  defp calc_loan_maturity(duration, today \\ Date.utc_today()) do
-    Date.add(today, String.to_integer(duration))
+  defp calc_loan_maturity(require_approval, duration, today \\ Date.utc_today()) do
+    case require_approval do
+      true ->
+        nil
+
+      false ->
+        Date.add(today, String.to_integer(duration))
+    end
   end
 
   defp calc_disbursed_on(require_approval) do
@@ -179,11 +217,28 @@ defmodule Fundsjet.Loans do
     case require_approval do
       true ->
         "pending"
-
       false ->
         "disbursed"
     end
+  end
 
-    "pending"
+  defp calc_installmet_date(require_approval, maturity_date) do
+    case require_approval do
+      false ->
+        maturity_date
+
+      true ->
+        nil
+    end
+  end
+
+  defp calc_next_penalty_date(require_approval, maturity_date) do
+    case require_approval do
+      false ->
+        Date.add(maturity_date, 1)
+
+      true ->
+        nil
+    end
   end
 end

@@ -7,7 +7,7 @@ defmodule Fundsjet.Repo.Migrations.CreateLoans do
       add :product_id, references(:products), null: false
       add :amount, :decimal, null: false
       add :commission, :decimal, null: false
-      add :maturity_date, :date, null: false
+      add :maturity_date, :date, null: true
       add :status, :string, null: false
       add :uuid, :uuid, null: false
       add :duration, :integer, null: false

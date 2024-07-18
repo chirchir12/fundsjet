@@ -17,7 +17,6 @@ defmodule Fundsjet.Loans.LoanRepayment do
 
   @required [
     :loan_id,
-    :installment_date,
     :principal_amount,
     :commission,
     :penalty_fee,
