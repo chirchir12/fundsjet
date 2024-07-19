@@ -44,4 +44,41 @@ defmodule FundsjetWeb.LoanController do
       send_resp(conn, :no_content, "")
     end
   end
+
+  def add_loan_approver(conn, %{"id" => loan_id, "approver" => params}) do
+    params = params |> Map.put_new("loan_id", loan_id)
+    with {:ok, approver} <- Loans.add_loan_approver(params) do
+      conn
+      |> put_status(:created)
+      |> render(:show, approver: approver)
+    end
+  end
+
+  def add_loan_review(conn, %{"id" => loan_id, "approver" => approver, "review" => params}) do
+    params = params
+                  |> Map.put_new("loan_id", loan_id)
+                  |> Map.put_new("staff_id", approver)
+    with {:ok, approver} <- Loans.add_review(params) do
+      conn
+      |> put_status(:ok)
+      |> render(:show, approver: approver)
+    end
+  end
+
+  def list_loan_approvers(conn, %{"id" => loan_id}) do
+
+    with approvers <- Loans.list_loan_approvers(loan_id) do
+      conn
+      |> put_status(:ok)
+      |> render(:index, approvers: approvers)
+    end
+  end
+
+  def get_loan_review(conn, %{"id" => loan_id, "approver" => staff_id}) do
+    with {:ok, approver} <- Loans.get_loan_approver(loan_id, staff_id) do
+      conn
+      |> put_status(:ok)
+      |> render(:show, approver: approver)
+    end
+  end
 end

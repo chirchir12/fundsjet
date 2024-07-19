@@ -11,6 +11,7 @@ defmodule Fundsjet.Loans do
   alias Fundsjet.Customers
   alias Fundsjet.Loans.Loan
   alias Fundsjet.Loans.LoanRepayment
+  alias Fundsjet.Loans.LoanApprovers
 
   @doc """
   Returns the list of loans.
@@ -112,6 +113,45 @@ defmodule Fundsjet.Loans do
   """
   def change_loan(%Loan{} = loan, attrs \\ %{}) do
     Loan.changeset(loan, attrs)
+  end
+
+  def add_loan_approver(params) do
+    attrs = %{
+      loan_id: Map.get(params, "loan_id"),
+      staff_id: Map.get(params, "staff_id"),
+      status: "pending",
+      priority: Map.get(params, "priority", 1)
+    }
+
+    %LoanApprovers{}
+    |> LoanApprovers.changeset(attrs)
+    |> Repo.insert()
+
+  end
+
+  def list_loan_approvers(loan_id) do
+    query = from a in LoanApprovers, where: a.loan_id == ^ loan_id
+    Repo.all(query)
+  end
+
+  def get_loan_approver(loan_id, staff_id) do
+    query = from a in LoanApprovers, where: a.staff_id == ^staff_id and a.loan_id == ^loan_id
+    case Repo.one(query) do
+      nil ->
+        {:error, :loan_reviewer_not_avaialable}
+      reviewer ->
+        {:ok, reviewer}
+    end
+  end
+
+  def add_review(params) do
+    loan_id = Map.get(params, "loan_id")
+    staff_id = Map.get(params, "staff_id")
+    with {:ok, approver} <- get_loan_approver(loan_id, staff_id) do
+      approver
+      |> LoanApprovers.changeset(params)
+      |> Repo.update()
+    end
   end
 
   defp save_loan(product, attrs) do

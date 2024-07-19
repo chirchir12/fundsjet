@@ -58,6 +58,12 @@ defmodule FundsjetWeb.Router do
     get "/loans", LoanController, :index
     get "/loans/:id", LoanController, :show
     # put "/loans/:id", LoanController, :update
+
+    post "/loans/:id/approvers", LoanController, :add_loan_approver
+    get "/loans/:id/approvers", LoanController, :list_loan_approvers
+    post "/loans/:id/approvers/:approver/review", LoanController, :add_loan_review
+    get "/loans/:id/approvers/:approver", LoanController, :get_loan_review
+
   end
 
   # Other scopes may use custom stacks.
