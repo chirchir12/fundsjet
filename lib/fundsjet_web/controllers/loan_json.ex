@@ -54,6 +54,4 @@ defmodule FundsjetWeb.LoanJSON do
       comment: approver.comment
     }
   end
-
-
 end

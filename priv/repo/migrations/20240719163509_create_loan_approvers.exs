@@ -12,6 +12,5 @@ defmodule Fundsjet.Repo.Migrations.CreateLoanApprovers do
     end
 
     create unique_index(:loan_approvers, [:loan_id, :staff_id])
-
   end
 end

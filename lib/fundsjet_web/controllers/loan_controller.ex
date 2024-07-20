@@ -6,6 +6,7 @@ defmodule FundsjetWeb.LoanController do
   alias Fundsjet.Identity.GuardianHelper
   alias Fundsjet.Identity.User
 
+
   action_fallback FundsjetWeb.FallbackController
 
   def index(conn, _params) do
@@ -47,6 +48,7 @@ defmodule FundsjetWeb.LoanController do
 
   def add_loan_approver(conn, %{"id" => loan_id, "approver" => params}) do
     params = params |> Map.put_new("loan_id", loan_id)
+
     with {:ok, approver} <- Loans.add_loan_approver(params) do
       conn
       |> put_status(:created)
@@ -55,9 +57,11 @@ defmodule FundsjetWeb.LoanController do
   end
 
   def add_loan_review(conn, %{"id" => loan_id, "approver" => approver, "review" => params}) do
-    params = params
-                  |> Map.put_new("loan_id", loan_id)
-                  |> Map.put_new("staff_id", approver)
+    params =
+      params
+      |> Map.put_new("loan_id", loan_id)
+      |> Map.put_new("staff_id", approver)
+
     with {:ok, approver} <- Loans.add_review(params) do
       conn
       |> put_status(:ok)
@@ -66,7 +70,6 @@ defmodule FundsjetWeb.LoanController do
   end
 
   def list_loan_approvers(conn, %{"id" => loan_id}) do
-
     with approvers <- Loans.list_loan_approvers(loan_id) do
       conn
       |> put_status(:ok)
@@ -79,6 +82,18 @@ defmodule FundsjetWeb.LoanController do
       conn
       |> put_status(:ok)
       |> render(:show, approver: approver)
+    end
+  end
+
+  def approve_loan(conn, %{"id" => loan_id, "params" => params}) do
+    {:ok, %User{id: current_user_id}} = GuardianHelper.get_current_user(conn)
+    params = params
+            |> Map.put_new("updated_by", current_user_id)
+            |> Map.put_new("updated_at", DateTime.utc_now())
+    with {:ok, loan} <- Loans.approve_loan(loan_id, params) do
+      conn
+      |> put_status(:ok)
+      |> render(:show, loan: loan)
     end
   end
 end

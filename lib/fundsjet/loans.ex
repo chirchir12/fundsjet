@@ -126,19 +126,35 @@ defmodule Fundsjet.Loans do
     %LoanApprovers{}
     |> LoanApprovers.changeset(attrs)
     |> Repo.insert()
-
   end
 
   def list_loan_approvers(loan_id) do
-    query = from a in LoanApprovers, where: a.loan_id == ^ loan_id
+    query = from a in LoanApprovers, where: a.loan_id == ^loan_id
     Repo.all(query)
+  end
+
+  def approve_loan(loan_id, params) do
+    with {:ok, :proceed} <- loan_has_pending_reviews(loan_id) do
+      %Loan{status: status} = loan = get_loan!(loan_id)
+
+      case status in ["pending", "in_review"] do
+        true ->
+          {:ok, loan} = update_loan(loan, params)
+          {:ok, loan}
+
+        false ->
+          {:error, :error_approving_loan}
+      end
+    end
   end
 
   def get_loan_review(loan_id, staff_id) do
     query = from a in LoanApprovers, where: a.staff_id == ^staff_id and a.loan_id == ^loan_id
+
     case Repo.one(query) do
       nil ->
         {:error, :loan_reviewer_not_avaialable}
+
       reviewer ->
         {:ok, reviewer}
     end
@@ -149,10 +165,10 @@ defmodule Fundsjet.Loans do
     staff_id = Map.get(params, "staff_id")
 
     with loan <- get_loan!(loan_id),
-    {:ok, old_review} <- get_loan_review(loan_id, staff_id),
-    {:ok, new_review} <- add_loan_review(old_review, params) do
-          _ = update_loan(loan, %{status: "in_review"})
-          {:ok, new_review}
+         {:ok, old_review} <- get_loan_review(loan_id, staff_id),
+         {:ok, new_review} <- add_loan_review(old_review, params) do
+      _ = update_loan(loan, %{status: "in_review"})
+      {:ok, new_review}
     end
   end
 
@@ -259,6 +275,7 @@ defmodule Fundsjet.Loans do
     case require_approval do
       true ->
         "pending"
+
       false ->
         "disbursed"
     end
@@ -286,8 +303,19 @@ defmodule Fundsjet.Loans do
 
   defp add_loan_review(current_review, new_review) do
     current_review
-      |> LoanApprovers.changeset(new_review)
-      |> Repo.update()
+    |> LoanApprovers.changeset(new_review)
+    |> Repo.update()
   end
 
+  defp loan_has_pending_reviews(loan_id) do
+    query = from a in LoanApprovers, where: a.loan_id == ^loan_id and a.status == "pending"
+
+    case Repo.exists?(query) do
+      true ->
+        {:error, :loan_still_in_review}
+
+      false ->
+        {:ok, :proceed}
+    end
+  end
 end

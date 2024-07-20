@@ -13,7 +13,7 @@ defmodule Fundsjet.Loans.LoanApprovers do
     :loan_id,
     :priority,
     :status,
-    :comment,
+    :comment
   ]
 
   @required [
@@ -48,12 +48,9 @@ defmodule Fundsjet.Loans.LoanApprovers do
     case status in @allowed_status do
       true ->
         changeset
+
       false ->
         changeset |> add_error(field, "invalid review status")
     end
   end
-
-
-
-
 end

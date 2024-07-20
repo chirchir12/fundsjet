@@ -63,6 +63,7 @@ defmodule FundsjetWeb.Router do
     get "/loans/:id/approvers", LoanController, :list_loan_approvers
     post "/loans/:id/approvers/:approver/review", LoanController, :add_loan_review
     get "/loans/:id/approvers/:approver", LoanController, :get_loan_review
+    post "/loans/:id/approve", LoanController, :approve_loan
 
   end
 
