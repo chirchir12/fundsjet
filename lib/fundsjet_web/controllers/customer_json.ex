@@ -5,14 +5,14 @@ defmodule FundsjetWeb.CustomerJSON do
   Renders a list of customers.
   """
   def index(%{customers: customers}) do
-    %{data: for(customer <- customers, do: data(customer))}
+    %{result: for(customer <- customers, do: data(customer))}
   end
 
   @doc """
   Renders a single customer.
   """
   def show(%{customer: customer}) do
-    %{data: data(customer)}
+    %{result: data(customer)}
   end
 
   defp data(%Customer{} = customer) do

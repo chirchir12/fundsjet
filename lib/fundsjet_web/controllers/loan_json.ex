@@ -6,22 +6,22 @@ defmodule FundsjetWeb.LoanJSON do
   Renders a list of loans.
   """
   def index(%{loans: loans}) do
-    %{data: for(loan <- loans, do: data(loan))}
+    %{result: for(loan <- loans, do: data(loan))}
   end
 
   def index(%{approvers: approvers}) do
-    %{data: for(approver <- approvers, do: data(approver))}
+    %{result: for(approver <- approvers, do: data(approver))}
   end
 
   @doc """
   Renders a single loan.
   """
   def show(%{loan: loan}) do
-    %{data: data(loan)}
+    %{result: data(loan)}
   end
 
   def show(%{approver: approver}) do
-    %{data: data(approver)}
+    %{result: data(approver)}
   end
 
   defp data(%Loan{} = loan) do

@@ -14,7 +14,7 @@ defmodule FundsjetWeb.ProductController do
     render(conn, :index, products: products)
   end
 
-  def create(conn, %{"product" => product_params}) do
+  def create(conn, %{"params" => product_params}) do
     {:ok, %User{id: current_user_id}} = GuardianHelper.get_current_user(conn)
     product_params = Map.put_new(product_params, "created_by", current_user_id)
 
@@ -30,7 +30,7 @@ defmodule FundsjetWeb.ProductController do
     render(conn, :show, product: product)
   end
 
-  def update(conn, %{"id" => id, "product" => product_params}) do
+  def update(conn, %{"id" => id, "params" => product_params}) do
     {:ok, %User{id: current_user_id}} = GuardianHelper.get_current_user(conn)
     product_params = Map.put_new(product_params, "updated_by", current_user_id)
     product = Products.get_product!(id)
@@ -48,7 +48,7 @@ defmodule FundsjetWeb.ProductController do
     end
   end
 
-  def create_configuration(conn, %{"product_id" => product_id, "config" => config_params}) do
+  def create_configuration(conn, %{"product_id" => product_id, "params" => config_params}) do
     # todo handle cases where this throw an error
     config_params =
       Enum.map(config_params, fn config -> Map.put_new(config, "product_id", product_id) end)

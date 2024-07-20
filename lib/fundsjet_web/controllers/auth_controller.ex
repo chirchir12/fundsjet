@@ -12,7 +12,7 @@ defmodule FundsjetWeb.AuthController do
     end
   end
 
-  def register(conn, %{"user" => user_params}) do
+  def register(conn, %{"params" => user_params}) do
     with {:ok, user, access_token, refresh_token} <- Auth.register(user_params) do
       conn
       |> put_status(:created)

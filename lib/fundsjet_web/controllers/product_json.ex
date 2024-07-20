@@ -6,22 +6,22 @@ defmodule FundsjetWeb.ProductJSON do
   Renders a list of products.
   """
   def index(%{products: products}) do
-    %{data: for(product <- products, do: data(product))}
+    %{result: for(product <- products, do: data(product))}
   end
 
   def index(%{configs: configs}) do
-    %{data: for(config <- configs, do: data(config))}
+    %{result: for(config <- configs, do: data(config))}
   end
 
   @doc """
   Renders a single product.
   """
   def show(%{product: product}) do
-    %{data: data(product)}
+    %{result: data(product)}
   end
 
   def show(%{config: config}) do
-    %{data: data(config)}
+    %{result: data(config)}
   end
 
   defp data(%Product{} = product) do

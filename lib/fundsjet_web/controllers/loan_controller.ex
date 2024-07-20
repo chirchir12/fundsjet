@@ -14,7 +14,7 @@ defmodule FundsjetWeb.LoanController do
     render(conn, :index, loans: loans)
   end
 
-  def create(conn, %{"loan" => loan_params}) do
+  def create(conn, %{"params" => loan_params}) do
     {:ok, %User{id: current_user_id}} = GuardianHelper.get_current_user(conn)
     loan_params = Map.put_new(loan_params, "created_by", current_user_id)
 
@@ -30,7 +30,7 @@ defmodule FundsjetWeb.LoanController do
     render(conn, :show, loan: loan)
   end
 
-  def update(conn, %{"id" => id, "loan" => loan_params}) do
+  def update(conn, %{"id" => id, "params" => loan_params}) do
     loan = Loans.get_loan!(id)
 
     with {:ok, %Loan{} = loan} <- Loans.update_loan(loan, loan_params) do
@@ -39,7 +39,7 @@ defmodule FundsjetWeb.LoanController do
   end
 
 
-  def add_loan_approver(conn, %{"id" => loan_id, "approver" => params}) do
+  def add_loan_approver(conn, %{"id" => loan_id, "params" => params}) do
     params = params |> Map.put_new("loan_id", loan_id)
 
     with {:ok, approver} <- Loans.add_loan_approver(params) do
@@ -49,11 +49,11 @@ defmodule FundsjetWeb.LoanController do
     end
   end
 
-  def add_loan_review(conn, %{"id" => loan_id, "approver" => approver, "review" => params}) do
+  def add_loan_review(conn, %{"id" => loan_id, "staff_id" => staff_id, "params" => params}) do
     params =
       params
       |> Map.put_new("loan_id", loan_id)
-      |> Map.put_new("staff_id", approver)
+      |> Map.put_new("staff_id", staff_id)
 
     with {:ok, approver} <- Loans.add_review(params) do
       conn
@@ -70,7 +70,7 @@ defmodule FundsjetWeb.LoanController do
     end
   end
 
-  def get_loan_review(conn, %{"id" => loan_id, "approver" => staff_id}) do
+  def get_loan_review(conn, %{"id" => loan_id, "staff_if" => staff_id}) do
     with {:ok, approver} <- Loans.get_loan_review(loan_id, staff_id) do
       conn
       |> put_status(:ok)

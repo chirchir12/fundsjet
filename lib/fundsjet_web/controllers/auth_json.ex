@@ -3,7 +3,7 @@ defmodule FundsjetWeb.AuthJSON do
 
   def auth_user(%{user: %User{} = user, access_token: access_token, refresh_token: refresh_token}) do
     %{
-      data: %{
+      result: %{
         user: %{
           id: user.uuid,
           type: user.type,
@@ -20,7 +20,7 @@ defmodule FundsjetWeb.AuthJSON do
 
   def token(%{access_token: access_token}) do
     %{
-      data: %{
+      result: %{
         access_token: access_token
       }
     }
