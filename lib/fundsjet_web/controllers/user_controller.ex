@@ -11,7 +11,7 @@ defmodule FundsjetWeb.UserController do
     render(conn, :index, users: users)
   end
 
-  def create(conn, %{"user" => user_params}) do
+  def create(conn, %{"params" => user_params}) do
     with {:ok, %User{} = user} <- Identity.create_user(user_params) do
       conn
       |> put_status(:created)
@@ -19,21 +19,21 @@ defmodule FundsjetWeb.UserController do
     end
   end
 
-  def show(conn, %{"id" => id}) do
-    user = Identity.get_user!(id)
+  def show(conn, %{"id" => uuid}) do
+    user = Identity.get_user_by!(uuid, :uuid)
     render(conn, :show, user: user)
   end
 
-  def update(conn, %{"id" => id, "user" => user_params}) do
-    user = Identity.get_user!(id)
+  def update(conn, %{"id" => uuid, "params" => user_params}) do
+    user = Identity.get_user_by!(uuid, :uuid)
 
     with {:ok, %User{} = user} <- Identity.update_user(user, user_params) do
       render(conn, :show, user: user)
     end
   end
 
-  def delete(conn, %{"id" => id}) do
-    user = Identity.get_user!(id)
+  def delete(conn, %{"id" => uuid}) do
+    user = Identity.get_user_by!(uuid, :uuid)
 
     with {:ok, %User{}} <- Identity.delete_user(user) do
       send_resp(conn, :no_content, "")
