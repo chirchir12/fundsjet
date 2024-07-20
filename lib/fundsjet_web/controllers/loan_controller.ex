@@ -38,13 +38,6 @@ defmodule FundsjetWeb.LoanController do
     end
   end
 
-  def delete(conn, %{"id" => id}) do
-    loan = Loans.get_loan!(id)
-
-    with {:ok, %Loan{}} <- Loans.delete_loan(loan) do
-      send_resp(conn, :no_content, "")
-    end
-  end
 
   def add_loan_approver(conn, %{"id" => loan_id, "approver" => params}) do
     params = params |> Map.put_new("loan_id", loan_id)

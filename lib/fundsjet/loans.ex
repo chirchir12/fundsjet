@@ -92,21 +92,6 @@ defmodule Fundsjet.Loans do
     |> Repo.update()
   end
 
-  @doc """
-  Deletes a loan.
-
-  ## Examples
-
-      iex> delete_loan(loan)
-      {:ok, %Loan{}}
-
-      iex> delete_loan(loan)
-      {:error, %Ecto.Changeset{}}
-
-  """
-  def delete_loan(%Loan{} = loan) do
-    Repo.delete(loan)
-  end
 
   @doc """
   Returns an `%Ecto.Changeset{}` for tracking loan changes.
