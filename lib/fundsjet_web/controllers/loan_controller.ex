@@ -70,7 +70,7 @@ defmodule FundsjetWeb.LoanController do
     end
   end
 
-  def get_loan_review(conn, %{"id" => loan_id, "staff_if" => staff_id}) do
+  def get_loan_review(conn, %{"id" => loan_id, "staff_id" => staff_id}) do
     with {:ok, approver} <- Loans.get_loan_review(loan_id, staff_id) do
       conn
       |> put_status(:ok)
