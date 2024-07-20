@@ -96,4 +96,12 @@ defmodule FundsjetWeb.LoanController do
       |> render(:show, loan: loan)
     end
   end
+
+  def disburse_loan(conn, %{"id" => loan_id}) do
+    with {:ok, loan} <- Loans.disburse_loan(loan_id) do
+      conn
+      |> put_status(:ok)
+      |> render(:show, loan: loan)
+    end
+  end
 end

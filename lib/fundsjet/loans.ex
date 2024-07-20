@@ -86,6 +86,12 @@ defmodule Fundsjet.Loans do
     |> Repo.update()
   end
 
+  def update_repayment(%LoanRepayment{} = repayment, attrs) do
+    repayment
+    |> LoanRepayment.changeset(attrs)
+    |> Repo.update()
+  end
+
   @doc """
   Deletes a loan.
 
@@ -148,6 +154,30 @@ defmodule Fundsjet.Loans do
     end
   end
 
+  def disburse_loan(loan_id) do
+    %Loan{status: status} = loan = get_loan!(loan_id)
+    case status do
+      "approved" ->
+        loan_attrs = %{
+          maturity_date: calc_loan_maturity(false, loan.duration),
+          disbursed_on: calc_disbursed_on(false),
+          status: "dibursed"
+        }
+        {:ok, loan} = update_loan(loan, loan_attrs)
+        %LoanRepayment{} = repayment = get_repayment(loan_id)
+        repayment_attrs = %{
+          installment_date: calc_installmet_date(false, loan.maturity_date),
+          next_penalty_date: calc_next_penalty_date(false, loan.maturity_date)
+        }
+        {:ok, _repayment} = update_repayment(repayment, repayment_attrs)
+        {:ok, loan}
+      _ ->
+        {:error, :error_disbursing_loan}
+
+    end
+
+  end
+
   def get_loan_review(loan_id, staff_id) do
     query = from a in LoanApprovers, where: a.staff_id == ^staff_id and a.loan_id == ^loan_id
 
@@ -203,7 +233,7 @@ defmodule Fundsjet.Loans do
           amount
         ),
       maturity_date:
-        calc_loan_maturity(product.require_approval, configuration["loanDuration"].value),
+        calc_loan_maturity(product.require_approval, String.to_integer(configuration["loanDuration"].value)),
       duration: String.to_integer(configuration["loanDuration"].value),
       status: calc_status(product.require_approval),
       term: String.to_integer(configuration["loanTerm"].value),
@@ -257,7 +287,7 @@ defmodule Fundsjet.Loans do
         nil
 
       false ->
-        Date.add(today, String.to_integer(duration))
+        Date.add(today, duration)
     end
   end
 
@@ -317,5 +347,10 @@ defmodule Fundsjet.Loans do
       false ->
         {:ok, :proceed}
     end
+  end
+
+  defp get_repayment(loan_id) do
+    query = from r in LoanRepayment, where: r.loan_id == ^loan_id
+    Repo.one(query)
   end
 end
