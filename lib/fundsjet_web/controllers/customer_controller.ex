@@ -19,21 +19,21 @@ defmodule FundsjetWeb.CustomerController do
     end
   end
 
-  def show(conn, %{"id" => id}) do
-    customer = Customers.get_customer!(id)
+  def show(conn, %{"id" => uuid}) do
+    customer = Customers.get_customer_by!(:uuid, uuid)
     render(conn, :show, customer: customer)
   end
 
-  def update(conn, %{"id" => id, "params" => customer_params}) do
-    customer = Customers.get_customer!(id)
+  def update(conn, %{"id" => uuid, "params" => customer_params}) do
+    customer = Customers.get_customer_by!(:uuid, uuid)
 
     with {:ok, %Customer{} = customer} <- Customers.update_customer(customer, customer_params) do
       render(conn, :show, customer: customer)
     end
   end
 
-  def delete(conn, %{"id" => id}) do
-    customer = Customers.get_customer!(id)
+  def delete(conn, %{"id" => uuid}) do
+    customer = Customers.get_customer_by!(:uuid, uuid)
 
     with {:ok, %Customer{}} <- Customers.delete_customer(customer) do
       send_resp(conn, :no_content, "")
