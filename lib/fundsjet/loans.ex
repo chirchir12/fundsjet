@@ -134,7 +134,7 @@ defmodule Fundsjet.Loans do
     Repo.all(query)
   end
 
-  def get_loan_approver(loan_id, staff_id) do
+  def get_loan_review(loan_id, staff_id) do
     query = from a in LoanApprovers, where: a.staff_id == ^staff_id and a.loan_id == ^loan_id
     case Repo.one(query) do
       nil ->
@@ -147,10 +147,12 @@ defmodule Fundsjet.Loans do
   def add_review(params) do
     loan_id = Map.get(params, "loan_id")
     staff_id = Map.get(params, "staff_id")
-    with {:ok, approver} <- get_loan_approver(loan_id, staff_id) do
-      approver
-      |> LoanApprovers.changeset(params)
-      |> Repo.update()
+
+    with loan <- get_loan!(loan_id),
+    {:ok, old_review} <- get_loan_review(loan_id, staff_id),
+    {:ok, new_review} <- add_loan_review(old_review, params) do
+          _ = update_loan(loan, %{status: "in_review"})
+          {:ok, new_review}
     end
   end
 
@@ -281,4 +283,11 @@ defmodule Fundsjet.Loans do
         nil
     end
   end
+
+  defp add_loan_review(current_review, new_review) do
+    current_review
+      |> LoanApprovers.changeset(new_review)
+      |> Repo.update()
+  end
+
 end
