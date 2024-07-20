@@ -50,7 +50,7 @@ defmodule Fundsjet.Loans.Loan do
     # product_id
     belongs_to :product, Fundsjet.Products.Product
 
-    has_many :loan_repayments, Fundsjet.Loans.LoanRepayment
+    has_many :loan_repayments, Fundsjet.Loans.LoanRepaymentSchedule
     has_many :approvers, Fundsjet.Loans.LoanApprovers
   end
 

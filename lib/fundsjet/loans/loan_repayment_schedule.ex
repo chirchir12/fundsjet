@@ -1,4 +1,4 @@
-defmodule Fundsjet.Loans.LoanRepayment do
+defmodule Fundsjet.Loans.LoanRepaymentSchedule do
   use Ecto.Schema
   import Ecto.Changeset
 
@@ -23,7 +23,7 @@ defmodule Fundsjet.Loans.LoanRepayment do
     :status
   ]
 
-  schema "loan_repayments" do
+  schema "loan_repayment_schedule" do
     field :installment_date, :date
     field :principal_amount, :decimal
     field :commission, :decimal

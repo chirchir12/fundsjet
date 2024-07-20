@@ -10,7 +10,7 @@ defmodule Fundsjet.Loans do
   alias Fundsjet.Products.Product
   alias Fundsjet.Customers
   alias Fundsjet.Loans.Loan
-  alias Fundsjet.Loans.LoanRepayment
+  alias Fundsjet.Loans.LoanRepaymentSchedule
   alias Fundsjet.Loans.LoanApprovers
 
   @doc """
@@ -63,7 +63,7 @@ defmodule Fundsjet.Loans do
          {:ok, nil, :customer_has_no_loan} <- get_loan_by(:customer_id, customer_id),
          new_atrrs <- Map.put(attrs, "customer_id", customer_id),
          {:ok, loan} <- save_loan(product, new_atrrs),
-         {:ok, _repayment} <- save_repayment(loan, product) do
+         {:ok, _repayment} <- save_repayment_schedule(loan, product) do
       {:ok, loan}
     end
   end
@@ -86,9 +86,9 @@ defmodule Fundsjet.Loans do
     |> Repo.update()
   end
 
-  def update_repayment(%LoanRepayment{} = repayment, attrs) do
-    repayment
-    |> LoanRepayment.changeset(attrs)
+  def update_repayment_schedule(%LoanRepaymentSchedule{} = repayment_schedule, attrs) do
+    repayment_schedule
+    |> LoanRepaymentSchedule.changeset(attrs)
     |> Repo.update()
   end
 
@@ -149,15 +149,19 @@ defmodule Fundsjet.Loans do
           status: "dibursed"
         }
         {:ok, loan} = update_loan(loan, loan_attrs)
-        %LoanRepayment{} = repayment = get_repayment(loan_id)
-        repayment_attrs = %{
+        %LoanRepaymentSchedule{} = repayment_schedule = get_repayment_schedule(loan_id)
+        repayment_schedule_attrs = %{
           installment_date: calc_installmet_date(false, loan.maturity_date),
           next_penalty_date: calc_next_penalty_date(false, loan.maturity_date)
         }
-        {:ok, _repayment} = update_repayment(repayment, repayment_attrs)
+        {:ok, _repayment} = update_repayment_schedule(repayment_schedule, repayment_schedule_attrs)
         {:ok, loan}
+      "dibursed" ->
+        {:error, :loan_has_been_disbursed}
+      "rejected" ->
+        {:error, :cannot_approve_reject_loan}
       _ ->
-        {:error, :error_disbursing_loan}
+        {:error, :loan_has_not_been_approved}
 
     end
 
@@ -191,8 +195,8 @@ defmodule Fundsjet.Loans do
     # todo. this should repayment full amount for now
     repayment_amount = params|> Map.get("amount")
     %Loan{status: status} = loan = get_loan!(loan_id)
-    %LoanRepayment{} = repayment = get_repayment(loan_id)
-    total_loan_amount = Decimal.to_float(repayment.principal_amount) + Decimal.to_float(repayment.commission) + Decimal.to_float(repayment.penalty_fee)
+    %LoanRepaymentSchedule{} = repayment_schedule = get_repayment_schedule(loan_id)
+    total_loan_amount = Decimal.to_float(repayment_schedule.principal_amount) + Decimal.to_float(repayment_schedule.commission) + Decimal.to_float(repayment_schedule.penalty_fee)
     if repayment_amount < total_loan_amount do
       {:error, :repayment_amount_lower_than_loan_amount}
     else
@@ -200,12 +204,12 @@ defmodule Fundsjet.Loans do
         "paid" ->
           {:error, :loan_already_repaid}
         _ ->
-          repayment_attrs = %{
+          repayment_schedule_attrs = %{
             status: "paid",
-            meta: Map.merge(repayment.meta || %{}, params),
+            meta: Map.merge(repayment_schedule.meta || %{}, params),
             paid_on: DateTime.utc_now()
           }
-          _ = update_repayment(repayment, repayment_attrs)
+          _ = update_repayment_schedule(repayment_schedule, repayment_schedule_attrs)
           loan_attrs = %{
             status: "paid",
             closed_on: Date.utc_today()
@@ -224,11 +228,11 @@ defmodule Fundsjet.Loans do
     |> Repo.insert()
   end
 
-  defp save_repayment(loan, product) do
-    repayment_attrs = create_loan_repayment_attrs(loan, product)
+  defp save_repayment_schedule(loan, product) do
+    repayment_schedule_attrs = create_loan_repayment_schedule_attrs(loan, product)
 
-    %LoanRepayment{}
-    |> LoanRepayment.changeset(repayment_attrs)
+    %LoanRepaymentSchedule{}
+    |> LoanRepaymentSchedule.changeset(repayment_schedule_attrs)
     |> Repo.insert()
   end
 
@@ -236,7 +240,7 @@ defmodule Fundsjet.Loans do
     amount = Map.get(attrs, "amount")
     configuration = Products.get_configuration(product.configuration)
 
-    loan_attrs = %{
+    %{
       amount: amount,
       customer_id: Map.get(attrs, "customer_id"),
       product_id: product.id,
@@ -254,12 +258,10 @@ defmodule Fundsjet.Loans do
       disbursed_on: calc_disbursed_on(product.require_approval),
       created_by: Map.get(attrs, "created_by")
     }
-
-    loan_attrs
   end
 
-  defp create_loan_repayment_attrs(loan, %Product{} = product) do
-    repayment_attrs = %{
+  defp create_loan_repayment_schedule_attrs(loan, %Product{} = product) do
+    %{
       loan_id: loan.id,
       installment_date: calc_installmet_date(product.require_approval, loan.maturity_date),
       principal_amount: loan.amount,
@@ -269,8 +271,6 @@ defmodule Fundsjet.Loans do
       next_penalty_date: calc_next_penalty_date(product.require_approval, loan.maturity_date),
       penalty_count: 0
     }
-
-    repayment_attrs
   end
 
   defp get_loan_by(:customer_id, customer_id) do
@@ -363,8 +363,8 @@ defmodule Fundsjet.Loans do
     end
   end
 
-  def get_repayment(loan_id) do
-    query = from r in LoanRepayment, where: r.loan_id == ^loan_id
+  defp get_repayment_schedule(loan_id) do
+    query = from r in LoanRepaymentSchedule, where: r.loan_id == ^loan_id
     Repo.one(query)
   end
 end

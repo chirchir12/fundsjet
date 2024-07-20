@@ -1,8 +1,8 @@
-defmodule Fundsjet.Repo.Migrations.CreateLoanRepayment do
+defmodule Fundsjet.Repo.Migrations.CreateLoanRepaymentSchedule do
   use Ecto.Migration
 
   def change do
-    create table(:loan_repayments) do
+    create table(:loan_repayment_schedule) do
       add :loan_id, references(:loans), null: false
       add :installment_date, :date, null: true
       add :principal_amount, :decimal, null: false
