@@ -97,4 +97,12 @@ defmodule FundsjetWeb.LoanController do
       |> render(:show, loan: loan)
     end
   end
+
+  def repay_loan(conn, %{"id" => loan_id, "params" => params}) do
+    with {:ok, loan} <- Loans.repay_loan(loan_id, params) do
+      conn
+      |> put_status(:ok)
+      |> render(:show, loan: loan)
+    end
+  end
 end

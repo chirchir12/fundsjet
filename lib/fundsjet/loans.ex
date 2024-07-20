@@ -187,6 +187,35 @@ defmodule Fundsjet.Loans do
     end
   end
 
+  def repay_loan(loan_id, params) do
+    # todo. this should repayment full amount for now
+    repayment_amount = params|> Map.get("amount")
+    %Loan{status: status} = loan = get_loan!(loan_id)
+    %LoanRepayment{} = repayment = get_repayment(loan_id)
+    total_loan_amount = Decimal.to_float(repayment.principal_amount) + Decimal.to_float(repayment.commission) + Decimal.to_float(repayment.penalty_fee)
+    if repayment_amount < total_loan_amount do
+      {:error, :repayment_amount_lower_than_loan_amount}
+    else
+      case status do
+        "paid" ->
+          {:error, :loan_already_repaid}
+        _ ->
+          repayment_attrs = %{
+            status: "paid",
+            meta: Map.merge(repayment.meta || %{}, params),
+            paid_on: DateTime.utc_now()
+          }
+          _ = update_repayment(repayment, repayment_attrs)
+          loan_attrs = %{
+            status: "paid",
+            closed_on: Date.utc_today()
+          }
+          {:ok, loan} = update_loan(loan, loan_attrs)
+          {:ok, loan}
+      end
+    end
+  end
+
   defp save_loan(product, attrs) do
     loan_attrs = create_loan_attrs(product, attrs)
 
@@ -244,7 +273,7 @@ defmodule Fundsjet.Loans do
     repayment_attrs
   end
 
-  def get_loan_by(:customer_id, customer_id) do
+  defp get_loan_by(:customer_id, customer_id) do
     query = from l in Loan, where: l.status != "paid" and l.customer_id == ^customer_id
 
     case Repo.one(query) do
@@ -334,7 +363,7 @@ defmodule Fundsjet.Loans do
     end
   end
 
-  defp get_repayment(loan_id) do
+  def get_repayment(loan_id) do
     query = from r in LoanRepayment, where: r.loan_id == ^loan_id
     Repo.one(query)
   end
