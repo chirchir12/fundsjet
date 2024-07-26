@@ -94,4 +94,15 @@ config :fundsjet, Fundsjet.Products,
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
 
+# oban configuration
+config :fundsjet, Oban,
+  engine: Oban.Engines.Basic,
+  queues: [default: 10],
+  repo: Fundsjet.Repo,
+  testing: :inline,
+  plugins: [
+    {Oban.Plugins.Lifeline, rescue_after: :timer.minutes(30)},
+    {Oban.Plugins.Pruner, max_age: 60 * 60 * 24 * 7} # 7 keep jobs for 7 days
+  ]
+
 import_config "#{config_env()}.exs"

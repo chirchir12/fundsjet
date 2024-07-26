@@ -7,9 +7,13 @@ defmodule Fundsjet.Application do
 
   @impl true
   def start(_type, _args) do
+    # telemetry
+    Oban.Telemetry.attach_default_logger()
+
     children = [
       FundsjetWeb.Telemetry,
       Fundsjet.Repo,
+      {Oban, Application.fetch_env!(:fundsjet, Oban)},
       {DNSCluster, query: Application.get_env(:fundsjet, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: Fundsjet.PubSub},
       # Start the Finch HTTP client for sending emails
