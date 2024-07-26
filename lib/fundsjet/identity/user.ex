@@ -42,7 +42,7 @@ defmodule Fundsjet.Identity.User do
 
     timestamps(type: :utc_datetime)
     has_one :customer, Fundsjet.Customers.Customer
-    has_many :approvers, Fundsjet.Loans.LoanApprovers
+    has_many :approvers, Fundsjet.Loans.LoanApprovers, [foreign_key: :staff_id]
   end
 
   @doc false
