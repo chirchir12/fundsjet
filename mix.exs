@@ -32,6 +32,7 @@ defmodule Fundsjet.MixProject do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
+      # phoenix
       {:phoenix, "~> 1.7.12"},
       {:phoenix_ecto, "~> 4.4"},
       {:ecto_sql, "~> 3.10"},
@@ -58,9 +59,12 @@ defmodule Fundsjet.MixProject do
       {:jason, "~> 1.2"},
       {:dns_cluster, "~> 0.1.1"},
       {:bandit, "~> 1.2"},
+
+      # infrastructure
       {:argon2_elixir, "~> 4.0"},
       {:guardian, "~> 2.3"},
-      {:guardian_db, "~> 2.0"}
+      {:guardian_db, "~> 2.0"},
+      {:oban, "~> 2.17"}
     ]
   end
 
