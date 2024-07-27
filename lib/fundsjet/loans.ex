@@ -63,7 +63,7 @@ defmodule Fundsjet.Loans do
     iex> get("invalid_id")
     {:error, :loan_not_found}
   """
-  def get(id) when is_integer(id) do
+  def get(id) do
     case Repo.get(Loan, id) do
       nil ->
         {:error, :loan_not_found}
@@ -71,10 +71,6 @@ defmodule Fundsjet.Loans do
       loan ->
         {:ok, loan}
     end
-  end
-
-  def get(_) do
-    {:error, :loan_not_found}
   end
 
   @doc """
@@ -221,15 +217,30 @@ defmodule Fundsjet.Loans do
     LoanReviewers.is_in_review?(loan_id)
   end
 
-  def approve_loan(%Loan{status: "in_review"} = loan, status) do
-    with {:ok, loan} = update_loan(loan, %{status: status}) do
+  def approve_loan(%Loan{status: "in_review"} = loan, params) do
+    with {:ok, loan} = update_loan(loan, params) do
       {:ok, loan}
     end
+  end
+
+  def approve_loan(%Loan{status: "approved"}=loan, _params) do
+    Logger.error("Cannot approve loan: #{inspect(loan)}")
+    {:error, :loan_already_approved}
   end
 
   def approve_loan(loan, _params) do
     Logger.error("Cannot approve loan: #{inspect(loan)}")
     {:error, :error_approving_loan}
+  end
+
+  def put_in_review(%Loan{status: "pending"} = loan) do
+    with {:ok, loan} = update_loan(loan, %{status: "in_review"}) do
+      {:ok, loan}
+    end
+  end
+
+  def put_in_review(%Loan{status: "in_review"} = loan) do
+    {:ok, loan}
   end
 
   def disburse_loan(loan, repayment_schedule, disbursement_date \\ Date.utc_today())
@@ -244,7 +255,7 @@ defmodule Fundsjet.Loans do
     loan_attrs = %{
       maturity_date: maturity_date,
       disbursed_on: disbursement_date,
-      status: "dibursed"
+      status: "disbursed"
     }
 
     {:ok, loan} = update_loan(loan, loan_attrs)
@@ -261,7 +272,7 @@ defmodule Fundsjet.Loans do
     end
   end
 
-  def disburse_loan(%Loan{status: "dibursed"}, _repayment_schedule, _disbursement_date) do
+  def disburse_loan(%Loan{status: "disbursed"}, _repayment_schedule, _disbursement_date) do
     {:error, :loan_has_been_disbursed}
   end
 
@@ -274,10 +285,10 @@ defmodule Fundsjet.Loans do
   end
 
   def repay_loan(
-        %Loan{} = loan,
+        %Loan{status: status} = loan,
         %LoanRepaymentSchedule{} = repayment_schedule,
         params
-      ) do
+      ) when status in ["late", "disbursed"] do
     # todo. this should repayment full amount for now
     repayment_amount = params |> Map.get("amount")
 

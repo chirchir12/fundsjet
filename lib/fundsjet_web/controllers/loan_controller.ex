@@ -51,18 +51,21 @@ defmodule FundsjetWeb.LoanController do
     with {:ok, staff} <- Identity.get_user_by(:uuid, Map.get(params, "staff_id")),
          {:ok, loan} <- Loans.get(loan_id),
          priority <- Map.get(params, "priority"),
-         {:ok, reviewer} <-
+         {:ok, review} <-
            Loans.add_reviewer(loan, staff, priority) do
       conn
       |> put_status(:ok)
-      |> render(:show, reviewer: reviewer)
+      |> render(:show, review: review)
     end
   end
 
   def add_loan_review(conn, %{"id" => loan_id, "params" => params}) do
-    with {:ok, current_review} <- Loans.get_review(loan_id, Map.get(params, "staff_id")),
+    with {:ok, %User{id: staff_id}} <- Identity.get_user_by(:uuid, Map.get(params, "staff_id")),
+         {:ok, loan} <- Loans.get(loan_id),
+         {:ok, current_review} <- Loans.get_review(loan_id, staff_id),
          params <- Map.put(params, "loan_id", loan_id),
-         {:ok, new_review} <- Loans.add_review(current_review, params) do
+         {:ok, new_review} <- Loans.add_review(current_review, params),
+         {:ok, _loan} <- Loans.put_in_review(loan) do
       conn
       |> put_status(:ok)
       |> render(:show, review: new_review)
