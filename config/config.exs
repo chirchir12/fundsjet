@@ -16,7 +16,7 @@ config :fundsjet, FundsjetWeb.Endpoint,
   url: [host: "localhost"],
   adapter: Bandit.PhoenixAdapter,
   render_errors: [
-    formats: [html: FundsjetWeb.ErrorHTML, json: FundsjetWeb.ErrorJSON],
+    formats: [json: FundsjetWeb.ErrorJSON],
     layout: false
   ],
   pubsub_server: Fundsjet.PubSub,
