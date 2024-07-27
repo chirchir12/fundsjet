@@ -11,11 +11,10 @@ defmodule Fundsjet.Identity.Guardian do
     {:error, :user_id_not_provided}
   end
 
-  def resource_from_claims(%{"sub" => id}) do
-    user = Identity.get_user_by!(id, :uuid)
-    {:ok, user}
-  rescue
-    Ecto.NoResultsError -> {:error, :user_not_found}
+  def resource_from_claims(%{"sub" => uuid}) do
+    with {:ok, user} <- Identity.get_user_by(:uuid, uuid) do
+      {:ok, user}
+    end
   end
 
   def after_encode_and_sign(resource, claims, token, _options) do

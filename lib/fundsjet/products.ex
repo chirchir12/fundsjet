@@ -108,10 +108,15 @@ defmodule Fundsjet.Products do
     Repo.exists?(query)
   end
 
-  def get_product_by!(:code, code) do
-    product = Repo.get_by!(Product, code: code)
-    product = Repo.preload(product, :configuration)
-    product
+  def get_by_code(code) do
+    case Repo.get_by(Product, code: code) do
+      nil ->
+        {:error, :product_not_found}
+
+      product ->
+        product = Repo.preload(product, :configuration)
+        {:ok, product}
+    end
   end
 
   def get_configuration(list_configs) when length(list_configs) > 0 do

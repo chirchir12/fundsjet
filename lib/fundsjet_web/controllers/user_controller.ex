@@ -20,23 +20,25 @@ defmodule FundsjetWeb.UserController do
   end
 
   def show(conn, %{"id" => uuid}) do
-    user = Identity.get_user_by!(uuid, :uuid)
-    render(conn, :show, user: user)
+    with {:ok, user} <- Identity.get_user_by(:uuid, uuid) do
+      conn
+      |> render(:show, user: user)
+    end
   end
 
   def update(conn, %{"id" => uuid, "params" => user_params}) do
-    user = Identity.get_user_by!(uuid, :uuid)
-
-    with {:ok, %User{} = user} <- Identity.update_user(user, user_params) do
-      render(conn, :show, user: user)
+    with {:ok, user} <- Identity.get_user_by(:uuid, uuid),
+         {:ok, %User{} = user} <- Identity.update_user(user, user_params) do
+      conn
+      |> render(:show, user: user)
     end
   end
 
   def delete(conn, %{"id" => uuid}) do
-    user = Identity.get_user_by!(uuid, :uuid)
-
-    with {:ok, %User{}} <- Identity.delete_user(user) do
-      send_resp(conn, :no_content, "")
+    with {:ok, user} <- Identity.get_user_by(:uuid, uuid),
+         {:ok, %User{}} <- Identity.delete_user(user) do
+      conn
+      |> send_resp(:no_content, "")
     end
   end
 end

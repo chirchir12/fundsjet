@@ -104,7 +104,13 @@ defmodule Fundsjet.Customers do
     Customer.changeset(customer, attrs)
   end
 
-  def get_customer_by!(:uuid, uuid) do
-    Repo.get_by!(Customer, uuid: uuid)
+  def get_by(:uuid, uuid) do
+    case Repo.get_by(Customer, uuid: uuid) do
+      nil ->
+        {:error, :customer_not_found}
+
+      customer ->
+        {:ok, customer}
+    end
   end
 end

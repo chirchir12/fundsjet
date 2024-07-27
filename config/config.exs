@@ -102,7 +102,8 @@ config :fundsjet, Oban,
   testing: :inline,
   plugins: [
     {Oban.Plugins.Lifeline, rescue_after: :timer.minutes(30)},
-    {Oban.Plugins.Pruner, max_age: 60 * 60 * 24 * 7} # 7 keep jobs for 7 days
+    # 7 keep jobs for 7 days
+    {Oban.Plugins.Pruner, max_age: 60 * 60 * 24 * 7}
   ]
 
 import_config "#{config_env()}.exs"

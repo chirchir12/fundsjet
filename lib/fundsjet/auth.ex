@@ -1,13 +1,11 @@
 defmodule Fundsjet.Identity.Auth do
   alias Fundsjet.Identity
-  alias Fundsjet.Identity.User
-  alias Fundsjet.Identity.Auth.Login
-  alias Fundsjet.Identity.Guardian
+  alias Fundsjet.Identity.{User, Auth.Login, Guardian}
 
   def login(email, plain_text_password) do
     with {:ok, %Ecto.Changeset{changes: %{email: email, password: pass}}} <-
            validate_login(email, plain_text_password),
-         {:ok, user} <- get_user_by_email(email),
+         {:ok, user} <- Identity.get_user_by(:email, email),
          {:ok, true} <- verify_password(pass, user.password_hash),
          {:ok, access_token, refresh_token} <- auth_reply(user) do
       {:ok, user, access_token, refresh_token}
@@ -31,13 +29,6 @@ defmodule Fundsjet.Identity.Auth do
   def revoke_refresh_token(refresh_token) do
     {:ok, _claim} = Guardian.revoke(refresh_token)
     :ok
-  end
-
-  defp get_user_by_email(email) do
-    user = Identity.get_user_by!(email, :email)
-    {:ok, user}
-  rescue
-    Ecto.NoResultsError -> {:error, :invalid_email}
   end
 
   defp verify_password(plain_password, hash_password) do
