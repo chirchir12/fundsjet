@@ -1,7 +1,15 @@
 defmodule Fundsjet.Loans.Loan do
   use Ecto.Schema
   import Ecto.Changeset
-  # todo validate statuses
+
+  @allowed_status [
+    "pending",
+    "paid",
+    "disbursed",
+    "in_review",
+    "approved",
+    "rejected"
+  ]
 
   @permitted [
     :product_id,
@@ -61,6 +69,7 @@ defmodule Fundsjet.Loans.Loan do
     |> validate_required(@required)
     |> maybe_put_uuid()
     |> unique_constraint(:uuid)
+    |> validate_inclusion(:status, @allowed_status)
   end
 
   defp maybe_put_uuid(%Ecto.Changeset{valid?: true} = changeset) do

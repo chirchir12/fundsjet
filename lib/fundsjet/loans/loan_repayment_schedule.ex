@@ -2,6 +2,12 @@ defmodule Fundsjet.Loans.LoanRepaymentSchedule do
   use Ecto.Schema
   import Ecto.Changeset
 
+  @allowed_status [
+    "pending",
+    "paid",
+    "late"
+  ]
+
   @permitted [
     :loan_id,
     :installment_date,
@@ -44,5 +50,6 @@ defmodule Fundsjet.Loans.LoanRepaymentSchedule do
     repayment
     |> cast(attrs, @permitted)
     |> validate_required(@required)
+    |> validate_inclusion(:status,  @allowed_status )
   end
 end

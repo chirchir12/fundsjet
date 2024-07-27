@@ -39,18 +39,6 @@ defmodule Fundsjet.Loans.LoanApprovers do
     |> cast(attrs, @permitted)
     |> validate_required(@required)
     |> unique_constraint([:loan_id, :staff_id])
-    |> validate_status(:status)
-  end
-
-  defp validate_status(changeset, field) do
-    status = changeset |> get_change(field)
-
-    case status in @allowed_status do
-      true ->
-        changeset
-
-      false ->
-        changeset |> add_error(field, "invalid review status")
-    end
+    |> validate_inclusion(:status, @allowed_status)
   end
 end
