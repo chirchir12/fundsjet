@@ -1,4 +1,4 @@
-defmodule Fundsjet.Loans.LoanApprovers do
+defmodule Fundsjet.Loans.LoanReview do
   use Ecto.Schema
   import Ecto.Changeset
 
@@ -23,7 +23,7 @@ defmodule Fundsjet.Loans.LoanApprovers do
     :status
   ]
 
-  schema "loan_approvers" do
+  schema "loan_reviews" do
     field :priority, :integer
     field :status, :string
     field :comment, :string
@@ -39,6 +39,13 @@ defmodule Fundsjet.Loans.LoanApprovers do
     |> cast(attrs, @permitted)
     |> validate_required(@required)
     |> unique_constraint([:loan_id, :staff_id])
+    |> validate_inclusion(:status, @allowed_status)
+  end
+
+  def add_review_changeset(%__MODULE__{} = review, attrs) do
+    review
+    |> cast(attrs, [:status, :comment])
+    |> validate_required([:status, :comment])
     |> validate_inclusion(:status, @allowed_status)
   end
 end

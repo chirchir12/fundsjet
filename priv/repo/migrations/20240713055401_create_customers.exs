@@ -18,7 +18,10 @@ defmodule Fundsjet.Repo.Migrations.CreateCustomers do
       timestamps(type: :utc_datetime)
     end
 
-    create index(:customers, [:customer_number])
+    create unique_index(:customers, [:customer_number])
     create unique_index(:customers, [:uuid])
+    create unique_index(:customers, [:phone_number])
+    create unique_index(:customers, [:email])
+    create unique_index(:customers, [:identification_number])
   end
 end

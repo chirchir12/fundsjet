@@ -1,6 +1,6 @@
 defmodule FundsjetWeb.LoanJSON do
   alias Fundsjet.Loans.Loan
-  alias Fundsjet.Loans.LoanApprovers
+  alias Fundsjet.Loans.LoanReview
 
   @doc """
   Renders a list of loans.
@@ -9,8 +9,8 @@ defmodule FundsjetWeb.LoanJSON do
     %{result: for(loan <- loans, do: data(loan))}
   end
 
-  def index(%{approvers: approvers}) do
-    %{result: for(approver <- approvers, do: data(approver))}
+  def index(%{reviews: reviews}) do
+    %{result: for(review <- reviews, do: data(review))}
   end
 
   @doc """
@@ -20,8 +20,8 @@ defmodule FundsjetWeb.LoanJSON do
     %{result: data(loan)}
   end
 
-  def show(%{approver: approver}) do
-    %{result: data(approver)}
+  def show(%{review: review}) do
+    %{result: data(review)}
   end
 
   defp data(%Loan{} = loan) do
@@ -44,14 +44,14 @@ defmodule FundsjetWeb.LoanJSON do
     }
   end
 
-  defp data(%LoanApprovers{} = approver) do
+  defp data(%LoanReview{} = review) do
     %{
-      id: approver.id,
-      loan_id: approver.loan_id,
-      staff_id: approver.staff_id,
-      status: approver.status,
-      priority: approver.priority,
-      comment: approver.comment
+      id: review.id,
+      loan_id: review.loan_id,
+      staff_id: review.staff_id,
+      status: review.status,
+      priority: review.priority,
+      comment: review.comment
     }
   end
 end

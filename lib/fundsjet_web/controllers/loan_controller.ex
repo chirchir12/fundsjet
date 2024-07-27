@@ -5,20 +5,27 @@ defmodule FundsjetWeb.LoanController do
   alias Fundsjet.Loans.Loan
   alias Fundsjet.Identity.GuardianHelper
   alias Fundsjet.Identity.User
-
+  alias Fundsjet.Identity
+  alias Fundsjet.Products
+  alias Fundsjet.Customers
+  alias Fundsjet.Customers.Customer
 
   action_fallback FundsjetWeb.FallbackController
 
   def index(conn, _params) do
-    loans = Loans.list_loans()
+    loans = Loans.list_loans(nil)
     render(conn, :index, loans: loans)
   end
 
-  def create(conn, %{"params" => loan_params}) do
-    {:ok, %User{id: current_user_id}} = GuardianHelper.get_current_user(conn)
-    loan_params = Map.put_new(loan_params, "created_by", current_user_id)
-
-    with {:ok, %Loan{} = loan} <- Loans.create_loan(loan_params) do
+  def create(conn, %{"params" => params}) do
+    # todo check if customer has loan
+    with {:ok, %User{id: current_user_id}} <- GuardianHelper.get_current_user(conn),
+         {:ok, product} <- Products.get_by_code("loanProduct"),
+         {:ok, %Customer{id: customer_id} = customer} <-
+           Customers.get_by(:uuid, Map.get(params, "customer_id")),
+         params <- Map.put(params, "created_by", current_user_id),
+         params <- Map.put(params, "customer_id", customer_id),
+         {:ok, loan} <- Loans.create_loan(product, customer, params) do
       conn
       |> put_status(:created)
       |> render(:show, loan: loan)
@@ -26,72 +33,68 @@ defmodule FundsjetWeb.LoanController do
   end
 
   def show(conn, %{"id" => id}) do
-    loan = Loans.get_loan!(id)
-    render(conn, :show, loan: loan)
-  end
-
-  def update(conn, %{"id" => id, "params" => loan_params}) do
-    loan = Loans.get_loan!(id)
-
-    with {:ok, %Loan{} = loan} <- Loans.update_loan(loan, loan_params) do
-      render(conn, :show, loan: loan)
-    end
-  end
-
-
-  def add_loan_approver(conn, %{"id" => loan_id, "params" => params}) do
-    params = params |> Map.put_new("loan_id", loan_id)
-
-    with {:ok, approver} <- Loans.add_loan_approver(params) do
+    with {:ok, loan} <- Loans.get(id) do
       conn
-      |> put_status(:created)
-      |> render(:show, approver: approver)
+      |> render(:show, loan: loan)
     end
   end
 
-  def add_loan_review(conn, %{"id" => loan_id, "staff_id" => staff_id, "params" => params}) do
-    params =
-      params
-      |> Map.put_new("loan_id", loan_id)
-      |> Map.put_new("staff_id", staff_id)
+  def update(conn, %{"id" => id, "params" => params}) do
+    with {:ok, loan} <- Loans.get(id),
+         {:ok, %Loan{} = loan} <- Loans.update_loan(loan, params) do
+      conn
+      |> render(:show, loan: loan)
+    end
+  end
 
-    with {:ok, approver} <- Loans.add_review(params) do
+  def add_loan_reviewer(conn, %{"id" => loan_id, "params" => params}) do
+    with {:ok, staff} <- Identity.get_user_by(:uuid, Map.get(params, "staff_id")),
+         {:ok, loan} <- Loans.get(loan_id),
+         priority <- Map.get(params, "priority"),
+         {:ok, reviewer} <-
+           Loans.add_reviewer(loan, staff, priority) do
       conn
       |> put_status(:ok)
-      |> render(:show, approver: approver)
+      |> render(:show, reviewer: reviewer)
     end
   end
 
-  def list_loan_approvers(conn, %{"id" => loan_id}) do
-    with approvers <- Loans.list_loan_approvers(loan_id) do
+  def add_loan_review(conn, %{"id" => loan_id, "params" => params}) do
+    with {:ok, current_review} <- Loans.get_review(loan_id, Map.get(params, "staff_id")),
+         params <- Map.put(params, "loan_id", loan_id),
+         {:ok, new_review} <- Loans.add_review(current_review, params) do
       conn
       |> put_status(:ok)
-      |> render(:index, approvers: approvers)
+      |> render(:show, review: new_review)
     end
   end
 
-  def get_loan_review(conn, %{"id" => loan_id, "staff_id" => staff_id}) do
-    with {:ok, approver} <- Loans.get_loan_review(loan_id, staff_id) do
+  def list_loan_reviews(conn, %{"id" => loan_id}) do
+    with {:ok, reviews} <- Loans.list_reviews(loan_id) do
       conn
       |> put_status(:ok)
-      |> render(:show, approver: approver)
+      |> render(:index, reviews: reviews)
     end
   end
 
   def approve_loan(conn, %{"id" => loan_id, "params" => params}) do
-    {:ok, %User{id: current_user_id}} = GuardianHelper.get_current_user(conn)
-    params = params
-            |> Map.put_new("updated_by", current_user_id)
-            |> Map.put_new("updated_at", DateTime.utc_now())
-    with {:ok, loan} <- Loans.approve_loan(loan_id, params) do
+    with {:ok, %User{id: current_user_id}} <- GuardianHelper.get_current_user(conn),
+         {:ok, loan} <- Loans.get(loan_id),
+         params <- Map.put_new(params, "updated_by", current_user_id),
+         params <- Map.put_new(params, "updated_at", DateTime.utc_now()),
+         {:ok, loan} <- Loans.approve_loan(loan, params) do
       conn
       |> put_status(:ok)
       |> render(:show, loan: loan)
     end
   end
 
-  def disburse_loan(conn, %{"id" => loan_id}) do
-    with {:ok, loan} <- Loans.disburse_loan(loan_id) do
+  def disburse_loan(conn, %{"id" => loan_id, "params" => params}) do
+    with {:ok, loan} <- Loans.get(loan_id),
+         {:ok, repayment_schedule} <- Loans.get_repayment_schedule(loan_id),
+         disbursed_on <- Map.get(params, "disbursed_on"),
+         {:ok, date} <- parse_date(disbursed_on),
+         {:ok, loan} <- Loans.disburse_loan(loan, repayment_schedule, date) do
       conn
       |> put_status(:ok)
       |> render(:show, loan: loan)
@@ -99,10 +102,24 @@ defmodule FundsjetWeb.LoanController do
   end
 
   def repay_loan(conn, %{"id" => loan_id, "params" => params}) do
-    with {:ok, loan} <- Loans.repay_loan(loan_id, params) do
+    with {:ok, loan} <- Loans.get(loan_id),
+         {:ok, repayment_schedule} <- Loans.get_repayment_schedule(loan_id),
+         {:ok, loan} <- Loans.repay_loan(loan, repayment_schedule, params) do
       conn
       |> put_status(:ok)
       |> render(:show, loan: loan)
     end
+  end
+
+  defp parse_date(date) when is_binary(date) do
+    Date.from_iso8601(date)
+  end
+
+  defp parse_date(nil) do
+    {:ok, Date.utc_today()}
+  end
+
+  defp parse_date(date) do
+    date
   end
 end

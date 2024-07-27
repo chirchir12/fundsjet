@@ -48,6 +48,10 @@ defmodule Fundsjet.Customers.Customer do
     |> validate_required(@required)
     |> maybe_put_uuid()
     |> put_downcased_email()
+    |> unique_constraint(:email)
+    |> unique_constraint(:phone_number)
+    |> unique_constraint(:identification_number)
+    |> unique_constraint(:customer_number)
   end
 
   defp maybe_put_uuid(%Ecto.Changeset{valid?: true} = changeset) do

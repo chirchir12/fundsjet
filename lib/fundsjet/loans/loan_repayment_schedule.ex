@@ -50,6 +50,6 @@ defmodule Fundsjet.Loans.LoanRepaymentSchedule do
     repayment
     |> cast(attrs, @permitted)
     |> validate_required(@required)
-    |> validate_inclusion(:status,  @allowed_status )
+    |> validate_inclusion(:status, @allowed_status)
   end
 end
