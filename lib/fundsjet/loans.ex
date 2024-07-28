@@ -53,9 +53,10 @@ defmodule Fundsjet.Loans do
   end
 
   def active_loan_exists?(customer_id) do
-    case list_loans(%FilterLoan{customer_id: customer_id, status: "active"})do
+    case list_loans(%FilterLoan{customer_id: customer_id, status: "active"}) do
       [] ->
         {:ok, :no_active_loan}
+
       _ ->
         {:error, :customer_has_active_loan}
     end
@@ -347,6 +348,14 @@ defmodule Fundsjet.Loans do
         _params
       ) do
     {:error, :loan_already_repaid}
+  end
+
+  def repay_loan(
+        _loan,
+        _schedule,
+        _params
+      ) do
+    {:error, :error_repaying_loan}
   end
 
   defp save_loan(product, attrs) do
