@@ -2,10 +2,9 @@ defmodule FundsjetWeb.LoanController do
   use FundsjetWeb, :controller
 
   alias Fundsjet.Loans
-  alias Fundsjet.Loans.Loan
-  alias Fundsjet.Identity.GuardianHelper
-  alias Fundsjet.Identity.User
+  alias Fundsjet.Loans.{Loan}
   alias Fundsjet.Identity
+  alias Fundsjet.Identity.{User, GuardianHelper}
   alias Fundsjet.Products
   alias Fundsjet.Customers
   alias Fundsjet.Customers.Customer
@@ -23,6 +22,7 @@ defmodule FundsjetWeb.LoanController do
          {:ok, product} <- Products.get_by_code("loanProduct"),
          {:ok, %Customer{id: customer_id} = customer} <-
            Customers.get_by(:uuid, Map.get(params, "customer_id")),
+         {:ok, :no_active_loan} <- Loans.active_loan_exists?(customer_id),
          params <- Map.put(params, "created_by", current_user_id),
          params <- Map.put(params, "customer_id", customer_id),
          {:ok, loan} <- Loans.create_loan(product, customer, params) do

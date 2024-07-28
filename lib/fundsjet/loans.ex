@@ -8,7 +8,7 @@ defmodule Fundsjet.Loans do
   import Ecto.Query, warn: false
   alias Fundsjet.Products
   alias Fundsjet.Products.Product
-  alias Fundsjet.Loans.{Loan, LoanRepaymentSchedule, LoanReviewers}
+  alias Fundsjet.Loans.{Loan, LoanRepaymentSchedule, LoanReviewers, FilterLoan}
   require Logger
 
   @doc """
@@ -31,13 +31,34 @@ defmodule Fundsjet.Loans do
       iex> list_loans("invalid_id")
       [%Loan{}, ...]
   """
-  def list_loans(customer_id) when is_integer(customer_id) do
+  def list_loans(%FilterLoan{customer_id: customer_id, status: "active"})
+      when not is_nil(customer_id) do
+    query = from l in Loan, where: l.customer_id == ^customer_id and l.status != "paid"
+    Repo.all(query)
+  end
+
+  def list_loans(%FilterLoan{customer_id: customer_id, status: status})
+      when not is_nil(customer_id) and not is_nil(status) do
+    query = from l in Loan, where: l.customer_id == ^customer_id and l.status == ^status
+    Repo.all(query)
+  end
+
+  def list_loans(%FilterLoan{customer_id: customer_id}) when not is_nil(customer_id) do
     query = from l in Loan, where: l.customer_id == ^customer_id
     Repo.all(query)
   end
 
-  def list_loans(nil) do
+  def list_loans(_filter) do
     Repo.all(Loan)
+  end
+
+  def active_loan_exists?(customer_id) do
+    case list_loans(%FilterLoan{customer_id: customer_id, status: "active"})do
+      [] ->
+        {:ok, :no_active_loan}
+      _ ->
+        {:error, :customer_has_active_loan}
+    end
   end
 
   @doc """
@@ -223,7 +244,7 @@ defmodule Fundsjet.Loans do
     end
   end
 
-  def approve_loan(%Loan{status: "approved"}=loan, _params) do
+  def approve_loan(%Loan{status: "approved"} = loan, _params) do
     Logger.error("Cannot approve loan: #{inspect(loan)}")
     {:error, :loan_already_approved}
   end
@@ -288,7 +309,8 @@ defmodule Fundsjet.Loans do
         %Loan{status: status} = loan,
         %LoanRepaymentSchedule{} = repayment_schedule,
         params
-      ) when status in ["late", "disbursed"] do
+      )
+      when status in ["late", "disbursed"] do
     # todo. this should repayment full amount for now
     repayment_amount = params |> Map.get("amount")
 
