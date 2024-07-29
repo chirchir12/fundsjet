@@ -1,7 +1,6 @@
-defmodule Fundsjet.Identity.Guardian do
+defmodule Fundsjet.Identity.Auth.Guardian do
   use Guardian, otp_app: :fundsjet
-  alias Fundsjet.Identity
-  alias Fundsjet.Identity.User
+  alias Fundsjet.Identity.{User, Users}
 
   def subject_for_token(%User{uuid: id}, _claims) do
     {:ok, id}
@@ -12,7 +11,7 @@ defmodule Fundsjet.Identity.Guardian do
   end
 
   def resource_from_claims(%{"sub" => uuid}) do
-    with {:ok, user} <- Identity.get_user_by(:uuid, uuid) do
+    with {:ok, user} <- Users.get(:uuid, uuid) do
       {:ok, user}
     end
   end

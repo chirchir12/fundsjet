@@ -1,4 +1,4 @@
-defmodule Fundsjet.Products.Cofigurations do
+defmodule Fundsjet.Products.Configurations do
   alias Fundsjet.Products.Configuration
   alias Fundsjet.Repo
   import Ecto.Query

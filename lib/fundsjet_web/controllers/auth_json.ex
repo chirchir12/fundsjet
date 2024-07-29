@@ -25,4 +25,17 @@ defmodule FundsjetWeb.AuthJSON do
       }
     }
   end
+
+  def register(%{user: %User{} = user}) do
+    %{
+      result: %{
+        id: user.uuid,
+        type: user.type,
+        email: user.email,
+        first_name: user.first_name,
+        last_name: user.last_name,
+        primary_phone: user.primary_phone
+      }
+    }
+  end
 end

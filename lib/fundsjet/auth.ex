@@ -1,11 +1,10 @@
 defmodule Fundsjet.Identity.Auth do
-  alias Fundsjet.Identity
-  alias Fundsjet.Identity.{User, Auth.Login, Guardian}
+  alias Fundsjet.Identity.{User, Users, Auth.Login, Auth.Guardian}
 
   def login(email, plain_text_password) do
     with {:ok, %Ecto.Changeset{changes: %{email: email, password: pass}}} <-
            validate_login(email, plain_text_password),
-         {:ok, user} <- Identity.get_user_by(:email, email),
+         {:ok, user} <- Users.get(:email, email),
          {:ok, true} <- verify_password(pass, user.password_hash),
          {:ok, access_token, refresh_token} <- auth_reply(user) do
       {:ok, user, access_token, refresh_token}
@@ -13,9 +12,8 @@ defmodule Fundsjet.Identity.Auth do
   end
 
   def register(params) do
-    with {:ok, user} <- Identity.create_user(params),
-         {:ok, access_token, refresh_token} <- auth_reply(user) do
-      {:ok, user, access_token, refresh_token}
+    with {:ok, user} <- Users.create(params) do
+      {:ok, user}
     end
   end
 
@@ -29,6 +27,20 @@ defmodule Fundsjet.Identity.Auth do
   def revoke_refresh_token(refresh_token) do
     {:ok, _claim} = Guardian.revoke(refresh_token)
     :ok
+  end
+
+  def get_current_user(%Plug.Conn{} = conn) do
+    case Guardian.Plug.authenticated?(conn) do
+      true -> {:ok, Guardian.Plug.current_resource(conn)}
+      false -> {:error, :unauthorized}
+    end
+  end
+
+  def get_current_claim(%Plug.Conn{} = conn) do
+    case Guardian.Plug.authenticated?(conn) do
+      true -> {:ok, Guardian.Plug.current_claims(conn)}
+      false -> {:error, :unauthorized}
+    end
   end
 
   defp verify_password(plain_password, hash_password) do
@@ -64,7 +76,7 @@ defmodule Fundsjet.Identity.Auth do
 
   defp get_ttl_opt(:access) do
     :fundsjet
-    |> Application.get_env(Fundsjet.Identity.Guardian)
+    |> Application.get_env(Fundsjet.Identity.Auth.Guardian)
     |> Keyword.get(:tokens)
     |> Keyword.get(:access)
     |> Keyword.get(:ttl)
@@ -72,7 +84,7 @@ defmodule Fundsjet.Identity.Auth do
 
   defp get_ttl_opt(:refresh) do
     :fundsjet
-    |> Application.get_env(Fundsjet.Identity.Guardian)
+    |> Application.get_env(Fundsjet.Identity.Auth.Guardian)
     |> Keyword.get(:tokens)
     |> Keyword.get(:refresh)
     |> Keyword.get(:ttl)

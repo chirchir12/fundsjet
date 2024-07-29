@@ -62,7 +62,7 @@ config :logger, :console,
 config :phoenix, :json_library, Jason
 
 # setup guardian
-config :fundsjet, Fundsjet.Identity.Guardian,
+config :fundsjet, Fundsjet.Identity.Auth.Guardian,
   issuer: "fundsjet",
   secret_key: System.get_env("AUTH_SECRET", "secret_key"),
   tokens: [

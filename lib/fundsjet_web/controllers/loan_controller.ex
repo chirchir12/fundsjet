@@ -3,8 +3,7 @@ defmodule FundsjetWeb.LoanController do
 
   alias Fundsjet.Loans
   alias Fundsjet.Loans.{Loan}
-  alias Fundsjet.Identity
-  alias Fundsjet.Identity.{User, GuardianHelper}
+  alias Fundsjet.Identity.{User, Users, Auth}
   alias Fundsjet.Products
   alias Fundsjet.Customers
   alias Fundsjet.Customers.Customer
@@ -17,8 +16,7 @@ defmodule FundsjetWeb.LoanController do
   end
 
   def create(conn, %{"params" => params}) do
-    # todo check if customer has loan
-    with {:ok, %User{id: current_user_id}} <- GuardianHelper.get_current_user(conn),
+    with {:ok, %User{id: current_user_id}} <- Auth.get_current_user(conn),
          {:ok, product} <- Products.get_by_code("loanProduct"),
          {:ok, %Customer{id: customer_id} = customer} <-
            Customers.get_by(:uuid, Map.get(params, "customer_id")),
@@ -48,7 +46,7 @@ defmodule FundsjetWeb.LoanController do
   end
 
   def add_loan_reviewer(conn, %{"id" => loan_id, "params" => params}) do
-    with {:ok, staff} <- Identity.get_user_by(:uuid, Map.get(params, "staff_id")),
+    with {:ok, staff} <- Users.get(:uuid, Map.get(params, "staff_id")),
          {:ok, loan} <- Loans.get(loan_id),
          priority <- Map.get(params, "priority"),
          {:ok, review} <-
@@ -60,7 +58,7 @@ defmodule FundsjetWeb.LoanController do
   end
 
   def add_loan_review(conn, %{"id" => loan_id, "params" => params}) do
-    with {:ok, %User{id: staff_id}} <- Identity.get_user_by(:uuid, Map.get(params, "staff_id")),
+    with {:ok, %User{id: staff_id}} <- Users.get(:uuid, Map.get(params, "staff_id")),
          {:ok, loan} <- Loans.get(loan_id),
          {:ok, current_review} <- Loans.get_review(loan_id, staff_id),
          params <- Map.put(params, "loan_id", loan_id),
@@ -81,7 +79,7 @@ defmodule FundsjetWeb.LoanController do
   end
 
   def approve_loan(conn, %{"id" => loan_id, "params" => params}) do
-    with {:ok, %User{id: current_user_id}} <- GuardianHelper.get_current_user(conn),
+    with {:ok, %User{id: current_user_id}} <- Auth.get_current_user(conn),
          {:ok, loan} <- Loans.get(loan_id),
          params <- Map.put_new(params, "updated_by", current_user_id),
          params <- Map.put_new(params, "updated_at", DateTime.utc_now()),
