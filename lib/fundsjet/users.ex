@@ -71,7 +71,17 @@ defmodule Fundsjet.Identity.Users do
   end
 
   def get(:email, email) do
-    case Repo.get_by(User, email: email) do
+    case Repo.get_by(User, email: String.downcase(email)) do
+      nil ->
+        {:error, :user_not_found}
+
+      user ->
+        {:ok, user}
+    end
+  end
+
+  def get(:username, username) do
+    case Repo.get_by(User, username: String.downcase(username)) do
       nil ->
         {:error, :user_not_found}
 
@@ -125,7 +135,7 @@ defmodule Fundsjet.Identity.Users do
   """
   def update(%User{} = user, attrs) do
     user
-    |> User.changeset(attrs)
+    |> User.update_changeset(attrs)
     |> Repo.update()
   end
 
@@ -143,18 +153,5 @@ defmodule Fundsjet.Identity.Users do
   """
   def delete(%User{} = user) do
     Repo.delete(user)
-  end
-
-  @doc """
-  Returns an `%Ecto.Changeset{}` for tracking user changes.
-
-  ## Examples
-
-      iex> change_user(user)
-      %Ecto.Changeset{data: %User{}}
-
-  """
-  def change_user(%User{} = user, attrs \\ %{}) do
-    User.changeset(user, attrs)
   end
 end

@@ -56,8 +56,17 @@ defmodule Fundsjet.Identity.User do
     |> unique_constraint(:email)
     |> unique_constraint(:username)
     |> put_downcased_email()
+    |> put_downcased_username()
     |> maybe_put_uuid()
     |> put_password_hash()
+  end
+
+  def update_changeset(user, attrs) do
+    user
+    |> cast(attrs, [:first_name, :last_name, :username, :type, :primary_phone, :is_active])
+    |> validate_required([:first_name, :last_name, :username, :type, :primary_phone])
+    |> unique_constraint(:username)
+    |> put_downcased_username()
   end
 
   defp maybe_validate_password(changeset) do
@@ -76,6 +85,14 @@ defmodule Fundsjet.Identity.User do
 
   defp put_downcased_email(changeset), do: changeset
 
+  defp put_downcased_username(
+         %Ecto.Changeset{valid?: true, changes: %{username: username}} = changeset
+       ) do
+    changeset |> put_change(:username, username |> String.downcase())
+  end
+
+  defp put_downcased_username(changeset), do: changeset
+
   defp maybe_put_uuid(%Ecto.Changeset{valid?: true} = changeset) do
     if changeset.data.id do
       changeset
@@ -90,7 +107,9 @@ defmodule Fundsjet.Identity.User do
   defp maybe_put_uuid(changeset), do: changeset
 
   defp put_password_hash(%Ecto.Changeset{valid?: true, changes: %{password: pass}} = changeset) do
-    changeset |> put_change(:password_hash, Argon2.hash_pwd_salt(pass))
+    changeset
+    |> put_change(:password_hash, Argon2.hash_pwd_salt(pass))
+    |> put_change(:password, nil)
   end
 
   defp put_password_hash(changeset), do: changeset
