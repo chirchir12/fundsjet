@@ -46,6 +46,7 @@ defmodule FundsjetWeb.ProductJSON do
 
   defp data(%Configuration{} = config) do
     %{
+      id: config.id,
       product_id: config.product_id,
       name: config.name,
       value: config.value,

@@ -1,6 +1,7 @@
 defmodule FundsjetWeb.ProductController do
   use FundsjetWeb, :controller
 
+  alias Fundsjet.Products.Configuration
   alias Fundsjet.Products
   alias Fundsjet.Products.{Product, Configurations}
   alias Fundsjet.Identity.{User, Auth}
@@ -62,9 +63,33 @@ defmodule FundsjetWeb.ProductController do
   def create_configuration(conn, %{"product_id" => product_id, "params" => params}) do
     with {:ok, _product} <- Products.get(:id, product_id),
          params <- Map.put_new(params, "product_id", product_id),
-         {:ok, configs} <- Configurations.create(params) do
+         {:ok, config} <- Configurations.create(params) do
       conn
-      |> render(:index, configs: [configs])
+      |> render(:show, config: config)
+    end
+  end
+
+  def list_configuration(conn, %{"product_id" => product_id}) do
+    with {:ok, _product} <- Products.get(:id, product_id),
+         configs <- Configurations.list(product_id) do
+      conn
+      |> render(:index, configs: configs)
+    end
+  end
+
+  def update_configuration(conn, %{"id" => config_id, "params" => params}) do
+    with {:ok, configuration} <- Configurations.get(config_id),
+         {:ok, config} <- Configurations.update(configuration, params) do
+      conn
+      |> render(:show, config: config)
+    end
+  end
+
+  def delete_configuration(conn, %{"id" => config_id}) do
+    with {:ok, configuration} <- Configurations.get(config_id),
+         {:ok, %Configuration{}} <- Configurations.delete(configuration) do
+      conn
+      |> send_resp(:no_content, "")
     end
   end
 end

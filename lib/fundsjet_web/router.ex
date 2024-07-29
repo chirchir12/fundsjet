@@ -53,6 +53,9 @@ defmodule FundsjetWeb.Router do
     delete "/products/:id", ProductController, :delete
 
     post "/products/:product_id/configuration", ProductController, :create_configuration
+    get "/products/:product_id/configuration", ProductController, :list_configuration
+    put "/products/configuration/:id", ProductController, :update_configuration
+    delete "/products/configuration/:id", ProductController, :delete_configuration
 
     post "/loans", LoanController, :create
     get "/loans", LoanController, :index
