@@ -47,13 +47,24 @@ defmodule FundsjetWeb.ProductController do
     end
   end
 
-  def create_configuration(conn, %{"product_id" => product_id, "params" => params}) do
-    # todo handle cases where this throw an error
-    config_params =
-      Enum.map(params, fn config -> Map.put_new(config, "product_id", product_id) end)
+  def create_configuration(conn, %{"product_id" => product_id, "params" => params})
+      when is_list(params) and length(params) > 0 do
+    with {:ok, _product} <- Products.get(:id, product_id),
+         params <-
+           Enum.map(params, fn param -> Map.put_new(param, "product_id", product_id) end),
+         {:ok, :ok} <- Configurations.create(params),
+         configs <- Configurations.list(product_id) do
+      conn
+      |> render(:index, configs: configs)
+    end
+  end
 
-    with configs <- Configurations.create_configurations(config_params) do
-      render(conn, :index, configs: configs)
+  def create_configuration(conn, %{"product_id" => product_id, "params" => params}) do
+    with {:ok, _product} <- Products.get(:id, product_id),
+         params <- Map.put_new(params, "product_id", product_id),
+         {:ok, configs} <- Configurations.create(params) do
+      conn
+      |> render(:index, configs: [configs])
     end
   end
 end

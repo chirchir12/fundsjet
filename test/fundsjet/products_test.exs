@@ -18,8 +18,8 @@ defmodule Fundsjet.ProductsTest do
     }
 
     test "list/0 returns all products" do
-      producct = product_fixture()
-      assert Products.list() == [producct]
+      product = product_fixture()
+      assert Products.list() == [product]
     end
 
     test "get/2 returns the product with given id" do
@@ -140,5 +140,7 @@ defmodule Fundsjet.ProductsTest do
 
       assert mapped_config == Products.build_configuration_map(configs)
     end
+
+
   end
 end
