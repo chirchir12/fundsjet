@@ -19,7 +19,7 @@ defmodule FundsjetWeb.LoanController do
     with {:ok, %User{id: current_user_id}} <- Auth.get_current_user(conn),
          {:ok, product} <- Products.get(:code, "loanProduct"),
          {:ok, %Customer{id: customer_id} = customer} <-
-           Customers.get_by(:uuid, Map.get(params, "customer_id")),
+           Customers.get(:uuid, Map.get(params, "customer_id")),
          {:ok, :no_active_loan} <- Loans.active_loan_exists?(customer_id),
          params <- Map.put(params, "created_by", current_user_id),
          params <- Map.put(params, "customer_id", customer_id),
