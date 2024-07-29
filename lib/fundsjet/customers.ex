@@ -13,43 +13,88 @@ defmodule Fundsjet.Customers do
 
   ## Examples
 
-      iex> list_customers()
+      iex> list()
       [%Customer{}, ...]
 
   """
-  def list_customers do
+  def list do
     Repo.all(Customer)
   end
 
   @doc """
-  Gets a single customer.
+  Fetches a customer from the database based on the provided UUID.
 
-  Raises `Ecto.NoResultsError` if the Customer does not exist.
+  ## Parameters
+
+    - `:uuid`: A fixed atom indicating that the search is by UUID.
+    - `uuid`: The UUID of the customer to fetch.
 
   ## Examples
 
-      iex> get_customer!(123)
-      %Customer{}
+        iex>  Fundsjet.Customers.get(:uuid, "123e4567-e89b-12d3-a456-426614174000")
+        {:ok, %Customer{}}
 
-      iex> get_customer!(456)
-      ** (Ecto.NoResultsError)
+        iex>  Fundsjet.Customers.get(:uuid, "non-existent-uuid")
+        {:error, :customer_not_found}
 
+  ## Returns
+
+    - `{:ok, %Customer{}}` if a customer with the given UUID is found.
+    - `{:error, :customer_not_found}` if no customer with the given UUID is found.
   """
-  def get_customer!(id), do: Repo.get!(Customer, id)
+  def get(:uuid, uuid) do
+    case Repo.get_by(Customer, uuid: uuid) do
+      nil ->
+        {:error, :customer_not_found}
+
+      customer ->
+        {:ok, customer}
+    end
+  end
+
+  @doc """
+  Fetches a customer from the database based on the provided ID.
+
+  ## Parameters
+
+    - `id`: The ID of the customer to fetch.
+
+  ## Examples
+
+        iex> Fundsjet.Customers.get(1)
+        {:ok, %Customer{}}
+
+        iex> Fundsjet.Customers.get(999)
+        {:error, :customer_not_found}
+
+  ## Returns
+
+    - `{:ok, %Customer{}}` if a customer with the given ID is found.
+    - `{:error, :customer_not_found}` if no customer with the given ID is found.
+  """
+  def get(id) do
+    case Repo.get(Customer, id) do
+      nil ->
+        {:error, :customer_not_found}
+
+      customer ->
+        {:ok, customer}
+    end
+  end
 
   @doc """
   Creates a customer.
 
   ## Examples
 
-      iex> create_customer(%{field: value})
+      iex> create(%{field: value})
       {:ok, %Customer{}}
 
-      iex> create_customer(%{field: bad_value})
+      iex> create(%{field: bad_value})
       {:error, %Ecto.Changeset{}}
 
   """
-  def create_customer(attrs \\ %{}) do
+  def create(attrs \\ %{}) do
     attrs = Map.put_new(attrs, "is_enabled", true)
 
     %Customer{}
@@ -62,14 +107,14 @@ defmodule Fundsjet.Customers do
 
   ## Examples
 
-      iex> update_customer(customer, %{field: new_value})
+      iex> update(customer, %{field: new_value})
       {:ok, %Customer{}}
 
-      iex> update_customer(customer, %{field: bad_value})
+      iex> update(customer, %{field: bad_value})
       {:error, %Ecto.Changeset{}}
 
   """
-  def update_customer(%Customer{} = customer, attrs) do
+  def update(%Customer{} = customer, attrs) do
     customer
     |> Customer.changeset(attrs)
     |> Repo.update()
@@ -80,37 +125,14 @@ defmodule Fundsjet.Customers do
 
   ## Examples
 
-      iex> delete_customer(customer)
+      iex> delete(customer)
       {:ok, %Customer{}}
 
-      iex> delete_customer(customer)
+      iex> delete(customer)
       {:error, %Ecto.Changeset{}}
 
   """
-  def delete_customer(%Customer{} = customer) do
+  def delete(%Customer{} = customer) do
     Repo.delete(customer)
-  end
-
-  @doc """
-  Returns an `%Ecto.Changeset{}` for tracking customer changes.
-
-  ## Examples
-
-      iex> change_customer(customer)
-      %Ecto.Changeset{data: %Customer{}}
-
-  """
-  def change_customer(%Customer{} = customer, attrs \\ %{}) do
-    Customer.changeset(customer, attrs)
-  end
-
-  def get_by(:uuid, uuid) do
-    case Repo.get_by(Customer, uuid: uuid) do
-      nil ->
-        {:error, :customer_not_found}
-
-      customer ->
-        {:ok, customer}
-    end
   end
 end
