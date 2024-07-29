@@ -20,7 +20,7 @@ defmodule Fundsjet.IdentityTest do
 
     test "list_identity/0 returns all identity" do
       user = user_fixture()
-      assert Identity.list_identity() == [user]
+      assert Identity.list_users() == [user]
     end
 
     test "get_user!/1 returns the user with given id" do
@@ -30,23 +30,23 @@ defmodule Fundsjet.IdentityTest do
 
     test "create_user/1 with valid data creates a user" do
       valid_attrs = %{
-        type: "some type",
-        username: "some username",
-        uuid: "some uuid",
-        email: "some email",
-        first_name: "some first_name",
-        last_name: "some last_name",
-        primary_phone: "some primary_phone"
+        email: "email@email.com",
+        first_name: "first_name",
+        last_name: "last_name",
+        primary_phone: "000000",
+        type: "staff",
+        username: "username",
+        password: "password"
       }
 
       assert {:ok, %User{} = user} = Identity.create_user(valid_attrs)
-      assert user.type == "some type"
-      assert user.username == "some username"
-      assert user.uuid == "some uuid"
-      assert user.email == "some email"
-      assert user.first_name == "some first_name"
-      assert user.last_name == "some last_name"
-      assert user.primary_phone == "some primary_phone"
+      assert user.type == "staff"
+      assert user.username == "username"
+      assert user.uuid != nil
+      assert user.email == "email@email.com"
+      assert user.first_name == "first_name"
+      assert user.last_name == "last_name"
+      assert user.primary_phone == "000000"
     end
 
     test "create_user/1 with invalid data returns error changeset" do

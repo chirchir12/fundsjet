@@ -7,20 +7,25 @@ defmodule Fundsjet.IdentityFixtures do
   @doc """
   Generate a user.
   """
-  def user_fixture(attrs \\ %{}) do
+  def create_user_fixture(attrs \\ %{}) do
     {:ok, user} =
       attrs
       |> Enum.into(%{
-        email: "some email",
-        first_name: "some first_name",
-        last_name: "some last_name",
-        primary_phone: "some primary_phone",
-        type: "some type",
-        username: "some username",
-        uuid: "some uuid"
+        email: "email@email.com",
+        first_name: "first_name",
+        last_name: "last_name",
+        primary_phone: "primary_phone",
+        type: "staff",
+        username: "username",
+        password: "password"
       })
       |> Fundsjet.Identity.create_user()
 
     user
   end
+
+  def get_user_fixture(user_id) do
+    Fundsjet.Identity.get_user!(user_id)
+  end
+
 end
