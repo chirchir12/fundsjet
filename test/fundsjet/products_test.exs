@@ -140,7 +140,5 @@ defmodule Fundsjet.ProductsTest do
 
       assert mapped_config == Products.build_configuration_map(configs)
     end
-
-
   end
 end

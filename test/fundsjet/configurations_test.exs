@@ -86,8 +86,9 @@ defmodule Fundsjet.ConfigurationsTest do
       assert {:error, %Changeset{}} = Configurations.create(config1)
     end
 
-    test "update/2 with valid data updates the configuration",  %{product: product} do
+    test "update/2 with valid data updates the configuration", %{product: product} do
       configuration = configuration_fixture(%{"product_id" => product.id})
+
       attrs = %{
         "product_id" => product.id,
         "name" => "name2",
@@ -98,7 +99,6 @@ defmodule Fundsjet.ConfigurationsTest do
       assert {:ok, %Configuration{} = config} = Configurations.update(configuration, attrs)
       assert config.value == "changed value"
       assert config.name == "name2"
-
     end
 
     test "delete/1 deletes the configuration", %{product: product} do
@@ -106,13 +106,6 @@ defmodule Fundsjet.ConfigurationsTest do
       assert {:ok, %Configuration{}} = Configurations.delete(configuration)
       assert {:error, :configuration_not_found} = Configurations.get(configuration.id)
     end
-
-
-
-
-
-
-
   end
 
   defp create_product(_) do
