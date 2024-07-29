@@ -376,7 +376,8 @@ defmodule Fundsjet.Loans do
 
   defp create_loan_attrs(%Product{} = product, attrs) do
     amount = Map.get(attrs, "amount")
-    configuration = Products.get_configuration(product.configuration)
+    product = Products.fetch_configs(product)
+    configuration = Products.build_configuration_map(product.configuration)
     disbursed_on = calc_disbursed_on(product.require_approval, Map.get(attrs, "disbursed_on"))
 
     %{

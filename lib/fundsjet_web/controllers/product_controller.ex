@@ -8,15 +8,14 @@ defmodule FundsjetWeb.ProductController do
   action_fallback FundsjetWeb.FallbackController
 
   def index(conn, _params) do
-    products = Products.list_products()
+    products = Products.list()
     render(conn, :index, products: products)
   end
 
-  def create(conn, %{"params" => product_params}) do
-    {:ok, %User{id: current_user_id}} = Auth.get_current_user(conn)
-    product_params = Map.put_new(product_params, "created_by", current_user_id)
-
-    with {:ok, %Product{} = product} <- Products.create_product(product_params) do
+  def create(conn, %{"params" => params}) do
+    with {:ok, %User{id: current_user_id}} <- Auth.get_current_user(conn),
+         params <- Map.put_new(params, "created_by", current_user_id),
+         {:ok, %Product{} = product} <- Products.create(params) do
       conn
       |> put_status(:created)
       |> render(:show, product: product)
@@ -24,32 +23,34 @@ defmodule FundsjetWeb.ProductController do
   end
 
   def show(conn, %{"id" => id}) do
-    product = Products.get_product!(id)
-    render(conn, :show, product: product)
+    with {:ok, product} <- Products.get(:id, id) do
+      conn
+      |> render(:show, product: product)
+    end
   end
 
-  def update(conn, %{"id" => id, "params" => product_params}) do
-    {:ok, %User{id: current_user_id}} = Auth.get_current_user(conn)
-    product_params = Map.put_new(product_params, "updated_by", current_user_id)
-    product = Products.get_product!(id)
-
-    with {:ok, %Product{} = product} <- Products.update_product(product, product_params) do
-      render(conn, :show, product: product)
+  def update(conn, %{"id" => id, "params" => params}) do
+    with {:ok, %User{id: current_user_id}} <- Auth.get_current_user(conn),
+         {:ok, product} <- Products.get(:id, id),
+         params <- Map.put_new(params, "updated_by", current_user_id),
+         {:ok, %Product{} = product} <- Products.update(product, params) do
+      conn
+      |> render(:show, product: product)
     end
   end
 
   def delete(conn, %{"id" => id}) do
-    product = Products.get_product!(id)
-
-    with {:ok, %Product{}} <- Products.delete_product(product) do
-      send_resp(conn, :no_content, "")
+    with {:ok, product} <- Products.get(:id, id),
+         {:ok, %Product{}} <- Products.delete(product) do
+      conn
+      |> send_resp(:no_content, "")
     end
   end
 
-  def create_configuration(conn, %{"product_id" => product_id, "params" => config_params}) do
+  def create_configuration(conn, %{"product_id" => product_id, "params" => params}) do
     # todo handle cases where this throw an error
     config_params =
-      Enum.map(config_params, fn config -> Map.put_new(config, "product_id", product_id) end)
+      Enum.map(params, fn config -> Map.put_new(config, "product_id", product_id) end)
 
     with configs <- Configurations.create_configurations(config_params) do
       render(conn, :index, configs: configs)

@@ -18,25 +18,87 @@ defmodule Fundsjet.Products do
       [%Producct{}, ...]
 
   """
-  def list_products do
+  def list do
     Repo.all(Product)
   end
 
   @doc """
-  Gets a single product.
+  Fetches a product from the database based on the provided identifier type and value.
 
-  Raises `Ecto.NoResultsError` if the Product does not exist.
+  ## Parameters
+
+    - `:id`: Fetches a product by its ID.
+    - `:code`: Fetches a product by its code.
 
   ## Examples
 
-      iex> get_product!(123)
-      %Producct{}
+    Fetching a product by ID:
 
-      iex> get_product!(456)
-      ** (Ecto.NoResultsError)
+        iex> Fundsjet.Products.get(:id, 1)
+        {:ok, %Product{}}
 
+        iex> Fundsjet.Products.get(:id, 999)
+        {:error, :product_not_found}
+
+    Fetching a product by code:
+
+        iex> Fundsjet.Products.get(:code, "ABC123")
+        {:ok, %Product{}}
+
+        iex> Fundsjet.Products.get(:code, "non-existent-code")
+        {:error, :product_not_found}
+
+  ## Returns
+
+    - `{:ok, %Product{}}` if a product is found. The product will be preloaded with its configuration.
+    - `{:error, :product_not_found}` if no product is found.
   """
-  def get_product!(id), do: Repo.get!(Product, id)
+  def get(:id, id) do
+    case Repo.get(Product, id) do
+      nil ->
+        {:error, :product_not_found}
+
+      product ->
+        {:ok, product}
+    end
+  end
+
+  def get(:code, code) do
+    case Repo.get_by(Product, code: code) do
+      nil ->
+        {:error, :product_not_found}
+
+      product ->
+        {:ok, product}
+    end
+  end
+
+  @doc """
+  Fetches and preloads the configurations associated with a given product.
+
+  ## Parameters
+
+    - `product`: A `%Product{}` struct representing the product for which configurations should be preloaded.
+
+  ## Examples
+
+    Fetching configurations for a product:
+
+        iex> product = Repo.get(Product, 1)
+        iex> Fundsjet.Products.fetch_configs(product)
+        %Product{
+          id: 1,
+          name: "Example Product",
+          configuration: [%Configuration{id: 1, name: "config1", value: "value1"}]
+        }
+
+  ## Returns
+
+    - A `%Product{}` struct with the `:configuration` association preloaded.
+  """
+  def fetch_configs(%Product{} = product) do
+    Repo.preload(product, :configuration)
+  end
 
   @doc """
   Creates a product.
@@ -50,7 +112,7 @@ defmodule Fundsjet.Products do
       {:error, %Ecto.Changeset{}}
 
   """
-  def create_product(attrs \\ %{}) do
+  def create(attrs \\ %{}) do
     %Product{}
     |> Product.changeset(attrs)
     |> Repo.insert()
@@ -68,7 +130,7 @@ defmodule Fundsjet.Products do
       {:error, %Ecto.Changeset{}}
 
   """
-  def update_product(%Product{} = product, attrs) do
+  def update(%Product{} = product, attrs) do
     product
     |> Product.changeset(attrs)
     |> Repo.update()
@@ -86,44 +148,71 @@ defmodule Fundsjet.Products do
       {:error, %Ecto.Changeset{}}
 
   """
-  def delete_product(%Product{} = product) do
+  def delete(%Product{} = product) do
     Repo.delete(product)
   end
 
   @doc """
-  Returns an `%Ecto.Changeset{}` for tracking producct changes.
+  Checks if a product with the given code exists in the database.
+
+  ## Parameters
+
+    - `product_code`: The code of the product to check.
 
   ## Examples
 
-      iex> change_product(product)
-      %Ecto.Changeset{data: %Product{}}
+        iex> Fundsjet.Products.exists?("ABC123")
+        true
 
+        iex> Fundsjet.Products.exists?("non-existent-code")
+        false
+
+  ## Returns
+
+    - `true` if a product with the given code exists.
+    - `false` if no product with the given code exists.
   """
-  def change_product(%Product{} = product, attrs \\ %{}) do
-    Product.changeset(product, attrs)
-  end
-
-  def product_exists?(product_code) do
+  def exists?(product_code) do
     query = from p in Product, where: p.code == ^product_code
     Repo.exists?(query)
   end
 
-  def get_by_code(code) do
-    case Repo.get_by(Product, code: code) do
-      nil ->
-        {:error, :product_not_found}
+  @doc """
+  Builds a map of configurations from a list of configuration structs.
 
-      product ->
-        product = Repo.preload(product, :configuration)
-        {:ok, product}
-    end
-  end
+  ## Parameters
 
-  def get_configuration(list_configs) when length(list_configs) > 0 do
+    - `list_configs`: A list of configuration structs.
+
+  ## Examples
+
+    Building a configuration map from a list of configurations:
+
+        iex> configurations = [
+        ...>   %Configuration{name: "config1", value: "value1"},
+        ...>   %Configuration{name: "config2", value: "value2"}
+        ...> ]
+        iex> Fundsjet.Products.build_configuration_map(configurations)
+        %{
+          "config1" => %Configuration{name: "config1", value: "value1"},
+          "config2" => %Configuration{name: "config2", value: "value2"}
+        }
+
+    Handling an empty list:
+
+        iex> Fundsjet.Products.build_configuration_map([])
+        %{}
+
+  ## Returns
+
+    - A map where each key is the `name` attribute of a configuration struct, and each value is the corresponding configuration struct.
+    - An empty map if the input is not a non-empty list.
+  """
+  def build_configuration_map(list_configs) when length(list_configs) > 0 do
     Enum.reduce(list_configs, %{}, &reduce_config/2)
   end
 
-  def get_configuration(_) do
+  def build_configuration_map(_) do
     %{}
   end
 

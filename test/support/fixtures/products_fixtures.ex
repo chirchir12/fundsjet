@@ -5,26 +5,24 @@ defmodule Fundsjet.ProductsFixtures do
   """
 
   @doc """
-  Generate a producct.
+  Generate a product.
   """
-  def producct_fixture(attrs \\ %{}) do
-    {:ok, producct} =
+  def product_fixture(attrs \\ %{}) do
+    {:ok, product} =
       attrs
       |> Enum.into(%{
-        code: "some code",
-        created_by: 42,
-        currency: "some currency",
+        code: "testProduct",
+        currency: "KES",
         end_date: ~D[2024-07-12],
         is_enabled: true,
-        name: "some name",
+        name: "test Product",
         require_approval: true,
         require_docs: true,
         start_date: ~D[2024-07-12],
-        status: "some status",
-        updated_by: 42
+        status: "approved"
       })
-      |> Fundsjet.Products.create_producct()
+      |> Fundsjet.Products.create()
 
-    producct
+    product
   end
 end
