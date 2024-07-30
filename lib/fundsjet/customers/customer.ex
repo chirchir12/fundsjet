@@ -1,6 +1,11 @@
 defmodule Fundsjet.Customers.Customer do
   use Ecto.Schema
   import Ecto.Changeset
+  import Fundsjet.Helpers
+
+  # todo support other countries
+  @phone_number_regex ~r/^(254\d{9})$/
+  @mail_regex ~r/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,4}$/
 
   @permitted [
     :customer_number,
@@ -52,6 +57,11 @@ defmodule Fundsjet.Customers.Customer do
     |> unique_constraint(:phone_number)
     |> unique_constraint(:identification_number)
     |> unique_constraint(:customer_number)
+    |> validate_inclusion(:identification_type, identification_types(),
+      message: "unsupported identification type"
+    )
+    |> validate_phone_number()
+    |> validate_format(:email, @mail_regex, message: "invalid email")
   end
 
   defp maybe_put_uuid(%Ecto.Changeset{valid?: true} = changeset) do
@@ -72,4 +82,16 @@ defmodule Fundsjet.Customers.Customer do
   end
 
   defp put_downcased_email(changeset), do: changeset
+
+  defp validate_phone_number(
+         %Ecto.Changeset{valid?: true, changes: %{phone_number: phone}} = changeset
+       ) do
+    if phone =~ @phone_number_regex do
+      changeset
+    else
+      add_error(changeset, :phone_number, "invalid phone number")
+    end
+  end
+
+  defp validate_phone_number(changeset), do: changeset
 end

@@ -11,17 +11,16 @@ defmodule Fundsjet.CustomersFixtures do
     {:ok, customer} =
       attrs
       |> Enum.into(%{
-        customer_number: "some customer_number",
-        email: "some email",
-        first_name: "some first_name",
-        identification_number: "some identification_number",
-        identification_type: "some identification_type",
-        last_name: "some last_name",
-        phone_number: "some phone_number",
-        profile_pic: "some profile_pic",
-        user_id: 42
+        "customer_number" => "1234",
+        "email" => "test@mail.com",
+        "first_name" => "first_name",
+        "identification_number" => "4535422",
+        "identification_type" => "national_id",
+        "last_name" => "last_name",
+        "phone_number" => "254111111111",
+        "profile_pic" => "profile_pic"
       })
-      |> Fundsjet.Customers.create_customer()
+      |> Fundsjet.Customers.create()
 
     customer
   end

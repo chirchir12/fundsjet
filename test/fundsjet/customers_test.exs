@@ -9,98 +9,131 @@ defmodule Fundsjet.CustomersTest do
     import Fundsjet.CustomersFixtures
 
     @invalid_attrs %{
-      user_id: nil,
-      customer_number: nil,
-      first_name: nil,
-      last_name: nil,
-      phone_number: nil,
-      email: nil,
-      identification_type: nil,
-      identification_number: nil,
-      profile_pic: nil
+      "first_name" => nil,
+      "last_name" => nil,
+      "phone_number" => nil,
+      "email" => nil,
+      "identification_type" => nil,
+      "identification_number" => nil
     }
 
-    test "list_customers/0 returns all customers" do
+    @valid_attrs %{
+      "customer_number" => "1234",
+      "first_name" => "first_name",
+      "last_name" => "last_name",
+      "phone_number" => "254111111111",
+      # same email as abov
+      "email" => "test1@mail.com",
+      "identification_type" => "national_id",
+      "identification_number" => "1234"
+    }
+
+    test "list/0 returns all customers" do
       customer = customer_fixture()
-      assert Customers.list_customers() == [customer]
+      assert Customers.list() == [customer]
     end
 
-    test "get_customer!/1 returns the customer with given id" do
+    test "get/1 returns the customer with given id" do
       customer = customer_fixture()
-      assert Customers.get_customer!(customer.id) == customer
+      assert {:ok, %Customer{} = cus} = Customers.get(customer.id)
+      assert cus == customer
     end
 
-    test "create_customer/1 with valid data creates a customer" do
-      valid_attrs = %{
-        user_id: 42,
-        customer_number: "some customer_number",
-        first_name: "some first_name",
-        last_name: "some last_name",
-        phone_number: "some phone_number",
-        email: "some email",
-        identification_type: "some identification_type",
-        identification_number: "some identification_number",
-        profile_pic: "some profile_pic"
-      }
-
-      assert {:ok, %Customer{} = customer} = Customers.create_customer(valid_attrs)
-      assert customer.user_id == 42
-      assert customer.customer_number == "some customer_number"
-      assert customer.first_name == "some first_name"
-      assert customer.last_name == "some last_name"
-      assert customer.phone_number == "some phone_number"
-      assert customer.email == "some email"
-      assert customer.identification_type == "some identification_type"
-      assert customer.identification_number == "some identification_number"
-      assert customer.profile_pic == "some profile_pic"
+    test "get/1 returns error when customer is not found with given id" do
+      assert {:error, :customer_not_found} = Customers.get(-1)
     end
 
-    test "create_customer/1 with invalid data returns error changeset" do
-      assert {:error, %Ecto.Changeset{}} = Customers.create_customer(@invalid_attrs)
-    end
-
-    test "update_customer/2 with valid data updates the customer" do
+    test "get/2 returns the customer with given uuid" do
       customer = customer_fixture()
+      assert {:ok, %Customer{} = cus} = Customers.get(:uuid, customer.uuid)
+      assert cus == customer
+    end
+
+    test "get/2 returns error when customer is not found with given uuid" do
+      assert {:error, :customer_not_found} = Customers.get(:uuid, Ecto.UUID.generate())
+    end
+
+    test "create/1 with valid data creates a customer" do
+      assert {:ok, %Customer{} = customer} = Customers.create(@valid_attrs)
+      assert customer.customer_number == "1234"
+      assert customer.first_name == "first_name"
+      assert customer.last_name == "last_name"
+      assert customer.phone_number == "254111111111"
+      assert customer.email == "test1@mail.com"
+      assert customer.identification_type == "national_id"
+      assert customer.identification_number == "1234"
+      assert customer.uuid != nil
+    end
+
+    test "create/1 with with existing email error changeset" do
+      _ = customer_fixture(%{"email" => "test1@mail.com"})
+
+      assert {:error, %Ecto.Changeset{}} = Customers.create(@valid_attrs)
+    end
+
+    test "create/1 with with invalid email error changeset" do
+      attrs = @valid_attrs |> Map.put("email", "email")
+      assert {:error, %Ecto.Changeset{}} = Customers.create(attrs)
+    end
+
+    test "create/1 with with existing phone error changeset" do
+      _ = customer_fixture(%{"phone_number" => "254111111111"})
+
+      assert {:error, %Ecto.Changeset{}} = Customers.create(@valid_attrs)
+    end
+
+    test "create/1 with with invalid phone error changeset" do
+      attrs = @valid_attrs |> Map.put("phone_number", "phone")
+      assert {:error, %Ecto.Changeset{}} = Customers.create(attrs)
+
+      attrs = @valid_attrs |> Map.put("phone_number", "0711111111")
+      assert {:error, %Ecto.Changeset{}} = Customers.create(attrs)
+    end
+
+    test "create/1 with with existing identification number error changeset" do
+      _ = customer_fixture(%{"identification_number" => "1234"})
+
+      assert {:error, %Ecto.Changeset{}} = Customers.create(@valid_attrs)
+    end
+
+    test "create/1 with invalid data returns error changeset" do
+      assert {:error, %Ecto.Changeset{}} = Customers.create(@invalid_attrs)
+    end
+
+    test "update/2 with valid data updates the customer" do
+      cust = customer_fixture()
 
       update_attrs = %{
-        user_id: 43,
-        customer_number: "some updated customer_number",
-        first_name: "some updated first_name",
-        last_name: "some updated last_name",
-        phone_number: "some updated phone_number",
-        email: "some updated email",
-        identification_type: "some updated identification_type",
-        identification_number: "some updated identification_number",
-        profile_pic: "some updated profile_pic"
+        customer_number: "1234567",
+        first_name: "first_name",
+        last_name: "updated_last_name",
+        phone_number: "254222222222",
+        identification_type: "passport",
+        identification_number: "54321"
       }
 
-      assert {:ok, %Customer{} = customer} = Customers.update_customer(customer, update_attrs)
-      assert customer.user_id == 43
-      assert customer.customer_number == "some updated customer_number"
-      assert customer.first_name == "some updated first_name"
-      assert customer.last_name == "some updated last_name"
-      assert customer.phone_number == "some updated phone_number"
-      assert customer.email == "some updated email"
-      assert customer.identification_type == "some updated identification_type"
-      assert customer.identification_number == "some updated identification_number"
-      assert customer.profile_pic == "some updated profile_pic"
+      assert {:ok, %Customer{} = customer} = Customers.update(cust, update_attrs)
+      assert customer.customer_number == "1234567"
+      assert customer.first_name == "first_name"
+      assert customer.last_name == "updated_last_name"
+      assert customer.phone_number == "254222222222"
+      assert customer.email == cust.email
+      assert customer.uuid == cust.uuid
+      assert customer.identification_type == "passport"
+      assert customer.identification_number == "54321"
     end
 
-    test "update_customer/2 with invalid data returns error changeset" do
+    test "update/2 with invalid data returns error changeset" do
       customer = customer_fixture()
-      assert {:error, %Ecto.Changeset{}} = Customers.update_customer(customer, @invalid_attrs)
-      assert customer == Customers.get_customer!(customer.id)
+      assert {:error, %Ecto.Changeset{}} = Customers.update(customer, @invalid_attrs)
+      assert {:ok, %Customer{} = cus} = Customers.get(customer.id)
+      assert cus == customer
     end
 
-    test "delete_customer/1 deletes the customer" do
+    test "delete/1 deletes the customer" do
       customer = customer_fixture()
-      assert {:ok, %Customer{}} = Customers.delete_customer(customer)
-      assert_raise Ecto.NoResultsError, fn -> Customers.get_customer!(customer.id) end
-    end
-
-    test "change_customer/1 returns a customer changeset" do
-      customer = customer_fixture()
-      assert %Ecto.Changeset{} = Customers.change_customer(customer)
+      assert {:ok, %Customer{}} = Customers.delete(customer)
+      assert {:error, :customer_not_found} = Customers.get(-1)
     end
   end
 end
