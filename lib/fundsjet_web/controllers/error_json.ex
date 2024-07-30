@@ -12,6 +12,10 @@ defmodule FundsjetWeb.ErrorJSON do
     %{errors: %{detail: error.message}}
   end
 
+  def render("401.json", %{error: error}) do
+    %{errors: %{detail: error.message}}
+  end
+
   # By default, Phoenix returns the status message from
   # the template name. For example, "404.json" becomes
   # "Not Found".

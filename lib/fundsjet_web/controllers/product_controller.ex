@@ -4,9 +4,11 @@ defmodule FundsjetWeb.ProductController do
   alias Fundsjet.Products.Configuration
   alias Fundsjet.Products
   alias Fundsjet.Products.{Product, Configurations}
-  alias Fundsjet.Identity.{User, Auth}
+  alias Fundsjet.Identity.{User}
 
   action_fallback FundsjetWeb.FallbackController
+
+  plug FundsjetWeb.AddAuthUserPlug
 
   def index(conn, _params) do
     products = Products.list()
@@ -14,7 +16,7 @@ defmodule FundsjetWeb.ProductController do
   end
 
   def create(conn, %{"params" => params}) do
-    with {:ok, %User{id: current_user_id}} <- Auth.get_current_user(conn),
+    with %User{id: current_user_id} <- conn.assigns[:auth_user],
          params <- Map.put_new(params, "created_by", current_user_id),
          {:ok, %Product{} = product} <- Products.create(params) do
       conn
@@ -31,7 +33,7 @@ defmodule FundsjetWeb.ProductController do
   end
 
   def update(conn, %{"id" => id, "params" => params}) do
-    with {:ok, %User{id: current_user_id}} <- Auth.get_current_user(conn),
+    with %User{id: current_user_id} <- conn.assigns[:auth_user],
          {:ok, product} <- Products.get(:id, id),
          params <- Map.put_new(params, "updated_by", current_user_id),
          {:ok, %Product{} = product} <- Products.update(product, params) do

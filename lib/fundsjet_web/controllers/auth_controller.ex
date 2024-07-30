@@ -1,11 +1,11 @@
 defmodule FundsjetWeb.AuthController do
   use FundsjetWeb, :controller
-  alias Fundsjet.Identity.Auth
+  alias Fundsjet.Identity.{Auth, Users}
 
   action_fallback FundsjetWeb.FallbackController
 
   def login(conn, %{"email" => email, "password" => plain_password}) do
-    with {:ok, user, access_token, refresh_token} <- Auth.login(email, plain_password) do
+    with {:ok, {user, access_token, refresh_token}} <- Auth.login(email, plain_password) do
       conn
       |> put_status(:ok)
       |> render(:auth_user, user: user, access_token: access_token, refresh_token: refresh_token)
@@ -13,7 +13,7 @@ defmodule FundsjetWeb.AuthController do
   end
 
   def register(conn, %{"params" => params}) do
-    with {:ok, user} <- Auth.register(params) do
+    with {:ok, user} <- Users.create(params) do
       conn
       |> put_status(:created)
       |> render(:register, user: user)

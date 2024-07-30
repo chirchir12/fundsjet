@@ -6,14 +6,8 @@ defmodule Fundsjet.Identity.Auth do
            validate_login(email, plain_text_password),
          {:ok, user} <- Users.get(:email, email),
          {:ok, true} <- verify_password(pass, user.password_hash),
-         {:ok, access_token, refresh_token} <- auth_reply(user) do
-      {:ok, user, access_token, refresh_token}
-    end
-  end
-
-  def register(params) do
-    with {:ok, user} <- Users.create(params) do
-      {:ok, user}
+         {:ok, {access_token, refresh_token}} <- auth_reply(user) do
+      {:ok, {user, access_token, refresh_token}}
     end
   end
 
@@ -25,21 +19,8 @@ defmodule Fundsjet.Identity.Auth do
   end
 
   def revoke_refresh_token(refresh_token) do
-    {:ok, _claim} = Guardian.revoke(refresh_token)
-    :ok
-  end
-
-  def get_current_user(%Plug.Conn{} = conn) do
-    case Guardian.Plug.authenticated?(conn) do
-      true -> {:ok, Guardian.Plug.current_resource(conn)}
-      false -> {:error, :unauthorized}
-    end
-  end
-
-  def get_current_claim(%Plug.Conn{} = conn) do
-    case Guardian.Plug.authenticated?(conn) do
-      true -> {:ok, Guardian.Plug.current_claims(conn)}
-      false -> {:error, :unauthorized}
+    with {:ok, _claim} <- Guardian.revoke(refresh_token) do
+      :ok
     end
   end
 
@@ -51,26 +32,26 @@ defmodule Fundsjet.Identity.Auth do
   end
 
   defp create_access_token(%User{} = user) do
-    {:ok, access_token, _claim} =
-      Guardian.encode_and_sign(user, %{grant_type: "password", role: "individual.customer"},
-        token_type: :access,
-        ttl: get_ttl_opt(:access)
-      )
-
-    {:ok, access_token}
+    with {:ok, access_token, _claim} <-
+           Guardian.encode_and_sign(user, %{grant_type: "password", role: "individual.customer"},
+             token_type: :access,
+             ttl: get_ttl_opt(:access)
+           ) do
+      {:ok, access_token}
+    end
   end
 
   defp create_refresh_token(%User{} = user) do
-    {:ok, refresh_token, _claim} =
-      Guardian.encode_and_sign(user, %{}, token_type: :refresh, ttl: get_ttl_opt(:refresh))
-
-    {:ok, refresh_token}
+    with {:ok, refresh_token, _claim} <-
+           Guardian.encode_and_sign(user, %{}, token_type: :refresh, ttl: get_ttl_opt(:refresh)) do
+      {:ok, refresh_token}
+    end
   end
 
   defp auth_reply(%User{} = user) do
     with {:ok, access_token} <- create_access_token(user),
          {:ok, refresh_token} <- create_refresh_token(user) do
-      {:ok, access_token, refresh_token}
+      {:ok, {access_token, refresh_token}}
     end
   end
 

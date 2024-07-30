@@ -6,6 +6,8 @@ defmodule FundsjetWeb.CustomerController do
 
   action_fallback FundsjetWeb.FallbackController
 
+  plug FundsjetWeb.AddAuthUserPlug
+
   def index(conn, _params) do
     customers = Customers.list()
     render(conn, :index, customers: customers)

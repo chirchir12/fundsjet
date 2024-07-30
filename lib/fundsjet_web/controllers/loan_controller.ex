@@ -3,12 +3,14 @@ defmodule FundsjetWeb.LoanController do
 
   alias Fundsjet.Loans
   alias Fundsjet.Loans.{Loan}
-  alias Fundsjet.Identity.{User, Users, Auth}
+  alias Fundsjet.Identity.{User, Users}
   alias Fundsjet.Products
   alias Fundsjet.Customers
   alias Fundsjet.Customers.Customer
 
   action_fallback FundsjetWeb.FallbackController
+
+  plug FundsjetWeb.AddAuthUserPlug
 
   def index(conn, _params) do
     loans = Loans.list_loans(nil)
@@ -16,7 +18,7 @@ defmodule FundsjetWeb.LoanController do
   end
 
   def create(conn, %{"params" => params}) do
-    with {:ok, %User{id: current_user_id}} <- Auth.get_current_user(conn),
+    with %User{id: current_user_id} <- conn.assigns[:auth_user],
          {:ok, product} <- Products.get(:code, "loanProduct"),
          {:ok, %Customer{id: customer_id} = customer} <-
            Customers.get(:uuid, Map.get(params, "customer_id")),
@@ -79,7 +81,7 @@ defmodule FundsjetWeb.LoanController do
   end
 
   def approve_loan(conn, %{"id" => loan_id, "params" => params}) do
-    with {:ok, %User{id: current_user_id}} <- Auth.get_current_user(conn),
+    with %User{id: current_user_id} <- conn.assigns[:auth_user],
          {:ok, loan} <- Loans.get(loan_id),
          params <- Map.put_new(params, "updated_by", current_user_id),
          params <- Map.put_new(params, "updated_at", DateTime.utc_now()),
