@@ -1,4 +1,5 @@
 defmodule Fundsjet.Identity.Auth do
+  alias Fundsjet.Repo
   alias Fundsjet.Identity.{User, Users, Auth.Login, Auth.Guardian}
 
   def login(email, plain_text_password) do
@@ -21,6 +22,14 @@ defmodule Fundsjet.Identity.Auth do
   def revoke_refresh_token(refresh_token) do
     with {:ok, _claim} <- Guardian.revoke(refresh_token) do
       :ok
+    end
+  end
+
+  def change_password(%User{password_hash: password_hash} = user, current_password, new_password) do
+    with {:ok, true} <- verify_password(current_password, password_hash) do
+      user
+      |> User.update_password_changeset(%{password: new_password})
+      |> Repo.update()
     end
   end
 

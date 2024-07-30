@@ -69,6 +69,13 @@ defmodule Fundsjet.Identity.User do
     |> put_downcased_username()
   end
 
+  def update_password_changeset(user, attrs) do
+    user
+    |> cast(attrs, [:password])
+    |> validate_required([:password])
+    |> put_password_hash()
+  end
+
   defp maybe_validate_password(changeset) do
     if changeset.data.id do
       changeset

@@ -48,6 +48,22 @@ defmodule Fundsjet.Identity.AuthTest do
 
       assert {:error, :token_not_found} = Auth.renew_access(refresh)
     end
+
+    test "change_password/3 update password of the user", %{user: user} do
+      new_password = "new_password"
+      assert {:ok, %User{}} = Auth.change_password(user, "password", new_password)
+
+      assert {:ok, {%User{} = _logged_in_user, _access, _refresh}} =
+               Auth.login("test@mail.com", new_password)
+    end
+
+    test "change_password/3 return error when current password is not correct", %{user: user} do
+      new_password = "new_password"
+      assert {:error, :invalid_password} = Auth.change_password(user, "wrong", new_password)
+
+      assert {:ok, {%User{} = _logged_in_user, _access, _refresh}} =
+               Auth.login("test@mail.com", "password")
+    end
   end
 
   defp create_user(_) do
