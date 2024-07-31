@@ -86,6 +86,10 @@ defmodule Fundsjet.ConfigurationsTest do
       assert {:error, %Changeset{}} = Configurations.create(config1)
     end
 
+    test "create/1 with invalid data returns error changeset" do
+      assert {:error, %Ecto.Changeset{}} = Configurations.create(@invalid_attrs)
+    end
+
     test "update/2 with valid data updates the configuration", %{product: product} do
       configuration = configuration_fixture(%{"product_id" => product.id})
 

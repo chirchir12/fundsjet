@@ -31,35 +31,43 @@ defmodule Fundsjet.Loans do
       iex> list_loans("invalid_id")
       [%Loan{}, ...]
   """
-  def list_loans(%FilterLoan{customer_id: customer_id, status: "active"})
+  def list(%FilterLoan{customer_id: customer_id, status: "active"})
       when not is_nil(customer_id) do
     query = from l in Loan, where: l.customer_id == ^customer_id and l.status != "paid"
     Repo.all(query)
   end
 
-  def list_loans(%FilterLoan{customer_id: customer_id, status: status})
+  def list(%FilterLoan{customer_id: customer_id, status: status})
       when not is_nil(customer_id) and not is_nil(status) do
     query = from l in Loan, where: l.customer_id == ^customer_id and l.status == ^status
     Repo.all(query)
   end
 
-  def list_loans(%FilterLoan{customer_id: customer_id}) when not is_nil(customer_id) do
+  def list(%FilterLoan{customer_id: customer_id}) when not is_nil(customer_id) do
     query = from l in Loan, where: l.customer_id == ^customer_id
     Repo.all(query)
   end
 
-  def list_loans(_filter) do
+  def list(%FilterLoan{customer_id: nil, status: nil}) do
+    list()
+  end
+
+  def list() do
     Repo.all(Loan)
   end
 
-  def active_loan_exists?(customer_id) do
-    case list_loans(%FilterLoan{customer_id: customer_id, status: "active"}) do
+  def check_active_loan(customer_id) when not is_nil(customer_id) do
+    case list(%FilterLoan{customer_id: customer_id, status: "active"}) do
       [] ->
         {:ok, :no_active_loan}
 
-      _ ->
+      [_ | _] ->
         {:error, :customer_has_active_loan}
     end
+  end
+
+  def check_active_loan(nil) do
+    {:error, :error_checking_active_loans}
   end
 
   @doc """
@@ -85,7 +93,7 @@ defmodule Fundsjet.Loans do
     iex> get("invalid_id")
     {:error, :loan_not_found}
   """
-  def get(id) do
+  def get(id) when is_integer(id) do
     case Repo.get(Loan, id) do
       nil ->
         {:error, :loan_not_found}
@@ -93,6 +101,10 @@ defmodule Fundsjet.Loans do
       loan ->
         {:ok, loan}
     end
+  end
+
+  def get(_) do
+    {:error, :loan_not_found}
   end
 
   @doc """
@@ -387,7 +399,7 @@ defmodule Fundsjet.Loans do
       commission:
         calc_commission(
           configuration["commissionType"].value,
-          configuration["loanComission"].value,
+          String.to_integer(configuration["loanComission"].value),
           amount
         ),
       maturity_date:
@@ -417,63 +429,66 @@ defmodule Fundsjet.Loans do
     }
   end
 
-  defp calc_commission(type, value, amount) do
-    case type do
-      "percent" ->
-        1 / 100 * String.to_integer(value) * amount
+  defp calc_commission("percent", value, amount) do
+    value / 100 * amount
+  end
 
-      "flat" ->
-        String.to_integer(value)
+  defp calc_commission("flat", value, _amount) do
+    value
+  end
+
+  defp calc_commission(_type, _value, nil) do
+    nil
+  end
+
+  defp calc_loan_maturity(require_approval, duration, disbursed_on)
+       when is_boolean(require_approval) do
+    if require_approval do
+      nil
+    else
+      Date.add(disbursed_on, duration)
     end
   end
 
-  defp calc_loan_maturity(require_approval, duration, disbursed_on) do
-    case require_approval do
-      true ->
-        nil
-
-      false ->
-        Date.add(disbursed_on, duration)
+  defp calc_loan_maturity(require_approval, duration, disbursed_on)
+       when is_boolean(require_approval) do
+    if require_approval do
+      nil
+    else
+      Date.add(disbursed_on, duration)
     end
   end
 
-  defp calc_disbursed_on(require_approval, disbursed_on) do
-    case require_approval do
-      true ->
-        nil
-
-      false ->
-        disbursed_on
+  defp calc_disbursed_on(require_approval, disbursed_on) when is_boolean(require_approval) do
+    if require_approval do
+      nil
+    else
+      disbursed_on
     end
   end
 
-  defp calc_status(require_approval) do
-    case require_approval do
-      true ->
-        "pending"
-
-      false ->
-        "disbursed"
+  defp calc_status(require_approval) when is_boolean(require_approval) do
+    if require_approval do
+      "pending"
+    else
+      "disbursed"
     end
   end
 
-  defp calc_installmet_date(require_approval, maturity_date) do
-    case require_approval do
-      false ->
-        maturity_date
-
-      true ->
-        nil
+  defp calc_installmet_date(require_approval, maturity_date) when is_boolean(require_approval) do
+    if require_approval do
+      nil
+    else
+      maturity_date
     end
   end
 
-  defp calc_next_penalty_date(require_approval, maturity_date) do
-    case require_approval do
-      false ->
-        Date.add(maturity_date, 1)
-
-      true ->
-        nil
+  defp calc_next_penalty_date(require_approval, maturity_date)
+       when is_boolean(require_approval) do
+    if require_approval do
+      nil
+    else
+      Date.add(maturity_date, 1)
     end
   end
 end

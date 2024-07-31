@@ -13,7 +13,7 @@ defmodule FundsjetWeb.LoanController do
   plug FundsjetWeb.AddAuthUserPlug
 
   def index(conn, _params) do
-    loans = Loans.list_loans(nil)
+    loans = Loans.list()
     render(conn, :index, loans: loans)
   end
 
@@ -22,7 +22,7 @@ defmodule FundsjetWeb.LoanController do
          {:ok, product} <- Products.get(:code, "loanProduct"),
          {:ok, %Customer{id: customer_id} = customer} <-
            Customers.get(:uuid, Map.get(params, "customer_id")),
-         {:ok, :no_active_loan} <- Loans.active_loan_exists?(customer_id),
+         {:ok, :no_active_loan} <- Loans.check_active_loan(customer_id),
          params <- Map.put(params, "created_by", current_user_id),
          params <- Map.put(params, "customer_id", customer_id),
          {:ok, loan} <- Loans.create_loan(product, customer, params) do

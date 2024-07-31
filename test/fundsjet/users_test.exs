@@ -88,7 +88,7 @@ defmodule Fundsjet.Identity.UsersTest do
     end
 
     test "create_user/1 with existing username return error" do
-      created_user = create_user_fixture()
+      _created_user = create_user_fixture()
 
       valid_attrs = %{
         "email" => "email@email.com",
@@ -104,7 +104,7 @@ defmodule Fundsjet.Identity.UsersTest do
     end
 
     test "create_user/1 with existing email return error" do
-      created_user = create_user_fixture()
+      _created_user = create_user_fixture()
 
       valid_attrs = %{
         "email" => "email@email.com",
@@ -145,7 +145,7 @@ defmodule Fundsjet.Identity.UsersTest do
     end
 
     test "update_user/2 with existing username throws error" do
-      created_user1 =
+      _created_user1 =
         create_user_fixture(%{"username" => "username1", "email" => "email1@mail.com"})
 
       created_user = create_user_fixture()
@@ -154,7 +154,7 @@ defmodule Fundsjet.Identity.UsersTest do
         username: "username1"
       }
 
-      assert {:error, %Ecto.Changeset{} = changset} = Users.update(created_user, update_attrs)
+      assert {:error, %Ecto.Changeset{}} = Users.update(created_user, update_attrs)
     end
 
     test "update_user/2 with invalid data returns error changeset" do
