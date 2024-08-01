@@ -1,7 +1,7 @@
 defmodule Fundsjet.LoansTest do
   alias Fundsjet.Products
   alias Fundsjet.Loans.FilterLoan
-  alias Fundsjet.Products.Product
+  # alias Fundsjet.Products.Product
   use Fundsjet.DataCase
 
   alias Fundsjet.Loans
@@ -15,9 +15,9 @@ defmodule Fundsjet.LoansTest do
     setup [:create_product, :create_customer, :create_config]
 
     @invalid_attrs %{
-      customer_id: nil,
-      amount: nil,
-      created_by: nil
+      "customer_id" => nil,
+      "amount" => nil,
+      "created_by" => nil
     }
 
     test "list/0 return list of loans", %{product: product, customer: customer} do
@@ -134,9 +134,39 @@ defmodule Fundsjet.LoansTest do
       assert schedule.penalty_fee == Decimal.new(0)
     end
 
-    # test "create_loan/3 with invalid data returns error changeset" do
-    #   assert {:error, %Ecto.Changeset{}} = Loans.create_loan(@invalid_attrs)
-    # end
+    test "create_loan/3 with invalid data returns error changeset", %{
+      product: product,
+      customer: customer
+    } do
+      assert {:error, %Ecto.Changeset{}} = Loans.create_loan(product, customer, @invalid_attrs)
+    end
+
+    test "create_loan/3 throws error when customer has an active loan", %{
+      product: product,
+      customer: customer
+    } do
+      _loan = loan_fixture(product, customer)
+
+      assert {:error, :customer_has_active_loan} =
+               Loans.create_loan(product, customer, %{
+                 "amount" => 100,
+                 "created_by" => customer.id,
+                 "customer_id" => customer.id
+               })
+    end
+
+    test "create_loan/3 throws error when customer is disabled", %{product: product, customer: customer} do
+
+      customer = %{customer | is_enabled: false}
+
+      assert {:error, :customer_is_disabled} =
+        Loans.create_loan(product, customer, %{
+          "amount" => 100,
+          "created_by" => customer.id,
+          "customer_id" => customer.id
+        })
+
+    end
 
     # test "update_loan/2 with valid data updates the loan" do
     #   loan = loan_fixture()

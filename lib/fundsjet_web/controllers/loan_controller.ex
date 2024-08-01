@@ -22,7 +22,6 @@ defmodule FundsjetWeb.LoanController do
          {:ok, product} <- Products.get(:code, "loanProduct"),
          {:ok, %Customer{id: customer_id} = customer} <-
            Customers.get(:uuid, Map.get(params, "customer_id")),
-         {:ok, :no_active_loan} <- Loans.check_active_loan(customer_id),
          params <- Map.put(params, "created_by", current_user_id),
          params <- Map.put(params, "customer_id", customer_id),
          {:ok, loan} <- Loans.create_loan(product, customer, params) do

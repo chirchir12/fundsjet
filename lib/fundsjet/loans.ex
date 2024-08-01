@@ -133,8 +133,10 @@ defmodule Fundsjet.Loans do
       iex> create_loan(%Product{id: 1, ...}, %Customer{id: 1, is_enabled: true}, %{amount: 1000, term: 12})
       {:error, reason}
   """
-  def create_loan(%Product{} = product, %Customer{is_enabled: true}, params) do
-    with {:ok, loan} <- save_loan(product, params),
+  def create_loan(%Product{} = product, %Customer{is_enabled: true, id: customer_id}, params) do
+    with {:ok, _valid_changeset} <- validate_loan(params),
+         {:ok, :no_active_loan} <- check_active_loan(customer_id),
+         {:ok, loan} <- save_loan(product, params),
          {:ok, _repayment} <- save_repayment_schedule(loan, product) do
       {:ok, loan}
     end
@@ -489,6 +491,15 @@ defmodule Fundsjet.Loans do
       nil
     else
       Date.add(maturity_date, 1)
+    end
+  end
+
+  defp validate_loan(attrs) do
+    changeset = Loan.changeset(%Loan{}, attrs)
+
+    case changeset.valid? do
+      true -> {:ok, changeset}
+      false -> {:error, changeset}
     end
   end
 end

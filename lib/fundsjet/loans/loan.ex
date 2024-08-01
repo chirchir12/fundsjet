@@ -29,13 +29,8 @@ defmodule Fundsjet.Loans.Loan do
   ]
 
   @required [
-    :product_id,
     :customer_id,
     :amount,
-    :commission,
-    :duration,
-    :status,
-    :term,
     :created_by
   ]
 
