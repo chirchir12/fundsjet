@@ -98,5 +98,7 @@ defmodule Fundsjet.LoansFixtures do
         }
       ]
       |> Fundsjet.Products.Configurations.create()
+
+    :ok
   end
 end

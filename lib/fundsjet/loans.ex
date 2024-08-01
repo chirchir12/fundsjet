@@ -444,7 +444,7 @@ defmodule Fundsjet.Loans do
   end
 
   defp calc_loan_maturity(require_approval, duration, disbursed_on)
-       when is_boolean(require_approval) do
+       when is_boolean(require_approval) and not is_nil(disbursed_on) do
     if require_approval do
       nil
     else
@@ -452,13 +452,8 @@ defmodule Fundsjet.Loans do
     end
   end
 
-  defp calc_loan_maturity(require_approval, duration, disbursed_on)
-       when is_boolean(require_approval) do
-    if require_approval do
-      nil
-    else
-      Date.add(disbursed_on, duration)
-    end
+  defp calc_loan_maturity(_require_approval, _duration, nil) do
+    nil
   end
 
   defp calc_disbursed_on(require_approval, disbursed_on) when is_boolean(require_approval) do
@@ -469,11 +464,15 @@ defmodule Fundsjet.Loans do
     end
   end
 
+  defp calc_disbursed_on(_require_approval, nil) do
+    nil
+  end
+
   defp calc_status(require_approval) when is_boolean(require_approval) do
     if require_approval do
       "pending"
     else
-      "disbursed"
+      "approved"
     end
   end
 
@@ -486,12 +485,16 @@ defmodule Fundsjet.Loans do
   end
 
   defp calc_next_penalty_date(require_approval, maturity_date)
-       when is_boolean(require_approval) do
+       when is_boolean(require_approval) and not is_nil(maturity_date) do
     if require_approval do
       nil
     else
       Date.add(maturity_date, 1)
     end
+  end
+
+  defp calc_next_penalty_date(_require_approval, nil) do
+    nil
   end
 
   defp validate_loan(attrs) do
