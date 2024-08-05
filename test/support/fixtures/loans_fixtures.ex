@@ -23,83 +23,31 @@ defmodule Fundsjet.LoansFixtures do
   end
 
   def create_loan_product_fixture(attrs \\ %{}) do
-    attrs =
+    {:ok, product} =
       attrs
       |> Enum.into(%{
-        "code" => "personal_loan",
-        "name" => "personal loan product",
-        "status" => "approved",
-        "description" => "test loan product",
-        "currency" => "KES",
-        "is_enabled" => true,
-        "require_approval" => true,
-        "require_docs" => true
+        code: "personal_loan",
+        description: "Personal Loan",
+        type: "loans",
+        currency: "KES",
+        is_enabled: true,
+        name: "test Product",
+        start_date: ~D[2024-07-12],
+        require_approval: true,
+        require_docs: true,
+        automatic_disbursement: true,
+        disbursement_fee: 5.0,
+        loan_duration: 30,
+        loan_term: 1,
+        loan_comission: 10,
+        commission_type: "percent",
+        loan_penalty: 5,
+        penalty_type: "percent",
+        penalty_duration: 100,
+        penalty_after: 5
       })
+      |> Fundsjet.Products.create()
 
-    {:ok, product} = Fundsjet.Products.create(attrs)
     product
-  end
-
-  def create_loan_configuration_fixture(%Product{id: product_id}) do
-    _ =
-      [
-        %{
-          name: "loan_duration",
-          value: "30",
-          description: "loan Duration in days",
-          product_id: product_id
-        },
-        %{
-          name: "repayment_term",
-          value: "1",
-          description: "Repayment is repaid after maturity",
-          product_id: product_id
-        },
-        %{
-          name: "loan_comission",
-          value: "10",
-          description: "Loan commission",
-          product_id: product_id
-        },
-        %{
-          name: "loan_term",
-          value: "1",
-          description: "Loan Term for Repayment schedul",
-          product_id: product_id
-        },
-        %{
-          name: "commission_type",
-          value: "percent",
-          description: "Loan commission type",
-          product_id: product_id
-        },
-        %{
-          name: "loan_penalty",
-          value: "50",
-          description: "Loan Penalty",
-          product_id: product_id
-        },
-        %{
-          name: "penalty_type",
-          value: "flat",
-          description: "Loan Penalty type",
-          product_id: product_id
-        },
-        %{
-          name: "penalty_duration",
-          value: "60",
-          description: "maximum days to apply penalty",
-          product_id: product_id
-        },
-        %{
-          name: "penalty_after",
-          value: "5",
-          description: "number of days to apply penalty after last penalty is applied",
-          product_id: product_id
-        }
-      ]
-      |> Fundsjet.Products.Configurations.create()
-
-    :ok
   end
 end

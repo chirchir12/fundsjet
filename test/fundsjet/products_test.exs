@@ -67,7 +67,7 @@ defmodule Fundsjet.ProductsTest do
       valid_attrs = %{
         "code" => "personal_loan",
         "description" => "Personal Loan",
-        "type" =>"loans",
+        "type" => "loans",
         "currency" => "KES",
         "is_enabled" => true,
         "name" => "personal loan",
@@ -114,7 +114,7 @@ defmodule Fundsjet.ProductsTest do
       valid_attrs = %{
         "code" => "personal_loan",
         "description" => "Personal Loan",
-        "type" =>"loans",
+        "type" => "loans",
         "currency" => "KES",
         "is_enabled" => true,
         "name" => "personal loan",
@@ -134,14 +134,13 @@ defmodule Fundsjet.ProductsTest do
       }
 
       assert {:error, %Changeset{}} = Products.create(valid_attrs)
-
     end
 
     test "create_product/1 throws error is loan_term is missing for type loans" do
       valid_attrs = %{
         "code" => "personal_loan",
         "description" => "Personal Loan",
-        "type" =>"loans",
+        "type" => "loans",
         "currency" => "KES",
         "is_enabled" => true,
         "name" => "personal loan",
@@ -161,14 +160,13 @@ defmodule Fundsjet.ProductsTest do
       }
 
       assert {:error, %Changeset{}} = Products.create(valid_attrs)
-
     end
 
     test "create_product/1 throws error is loan_comission is missing for type loans" do
       valid_attrs = %{
         "code" => "personal_loan",
         "description" => "Personal Loan",
-        "type" =>"loans",
+        "type" => "loans",
         "currency" => "KES",
         "is_enabled" => true,
         "name" => "personal loan",
@@ -188,14 +186,13 @@ defmodule Fundsjet.ProductsTest do
       }
 
       assert {:error, %Changeset{}} = Products.create(valid_attrs)
-
     end
 
     test "create_product/1 throws error is commission_type is missing for type loans" do
       valid_attrs = %{
         "code" => "personal_loan",
         "description" => "Personal Loan",
-        "type" =>"loans",
+        "type" => "loans",
         "currency" => "KES",
         "is_enabled" => true,
         "name" => "personal loan",
@@ -215,14 +212,13 @@ defmodule Fundsjet.ProductsTest do
       }
 
       assert {:error, %Changeset{}} = Products.create(valid_attrs)
-
     end
 
     test "create_product/1 throws error is loan_penalty is missing for type loans" do
       valid_attrs = %{
         "code" => "personal_loan",
         "description" => "Personal Loan",
-        "type" =>"loans",
+        "type" => "loans",
         "currency" => "KES",
         "is_enabled" => true,
         "name" => "personal loan",
@@ -242,14 +238,13 @@ defmodule Fundsjet.ProductsTest do
       }
 
       assert {:error, %Changeset{}} = Products.create(valid_attrs)
-
     end
 
     test "create_product/1 throws error is penalty_type is missing for type loans" do
       valid_attrs = %{
         "code" => "personal_loan",
         "description" => "Personal Loan",
-        "type" =>"loans",
+        "type" => "loans",
         "currency" => "KES",
         "is_enabled" => true,
         "name" => "personal loan",
@@ -269,14 +264,13 @@ defmodule Fundsjet.ProductsTest do
       }
 
       assert {:error, %Changeset{}} = Products.create(valid_attrs)
-
     end
 
     test "create_product/1 throws error is penalty_after is missing for type loans" do
       valid_attrs = %{
         "code" => "personal_loan",
         "description" => "Personal Loan",
-        "type" =>"loans",
+        "type" => "loans",
         "currency" => "KES",
         "is_enabled" => true,
         "name" => "personal loan",
@@ -291,12 +285,11 @@ defmodule Fundsjet.ProductsTest do
         "commission_type" => "percent",
         "loan_penalty" => 5,
         "penalty_type" => "percent",
-        "penalty_duration" => 100,
+        "penalty_duration" => 100
         # "penalty_after" => 5
       }
 
       assert {:error, %Changeset{}} = Products.create(valid_attrs)
-
     end
 
     test "create_product/1 with existing code return error changeset" do

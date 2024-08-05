@@ -26,7 +26,6 @@ defmodule Fundsjet.ProductsFixtures do
     product
   end
 
-
   def loan_product_fixture(attrs \\ %{}) do
     {:ok, product} =
       attrs
@@ -41,7 +40,7 @@ defmodule Fundsjet.ProductsFixtures do
         require_approval: true,
         require_docs: true,
         automatic_disbursement: true,
-        disbursement_fee: 5.0,
+        disbursement_fee: 5,
         loan_duration: 30,
         loan_term: 1,
         loan_comission: 10,
@@ -50,7 +49,6 @@ defmodule Fundsjet.ProductsFixtures do
         penalty_type: "percent",
         penalty_duration: 100,
         penalty_after: 5
-
       })
       |> Fundsjet.Products.create()
 

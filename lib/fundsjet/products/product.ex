@@ -84,7 +84,6 @@ defmodule Fundsjet.Products.Product do
     field :penalty_duration, :integer
     field :penalty_after, :integer
 
-
     # meta
     field :approval_meta, {:array, :map}
     field :documents_meta, {:array, :map}
@@ -108,8 +107,12 @@ defmodule Fundsjet.Products.Product do
   defp loan_changeset(%Ecto.Changeset{valid?: true, changes: %{type: "loans"}} = changeset) do
     changeset
     |> validate_required(@required_for_loan)
-    |> validate_inclusion(:commission_type, @commission_type, message: "invalid commission type. Only flat and percent are allowed")
-    |> validate_inclusion(:penalty_type, @penalty_type, message: "invalid penalty type. only flat and percent are allowed")
+    |> validate_inclusion(:commission_type, @commission_type,
+      message: "invalid commission type. Only flat and percent are allowed"
+    )
+    |> validate_inclusion(:penalty_type, @penalty_type,
+      message: "invalid penalty type. only flat and percent are allowed"
+    )
   end
 
   defp loan_changeset(changeset), do: changeset

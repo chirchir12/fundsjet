@@ -1,5 +1,4 @@
 defmodule Fundsjet.LoansTest do
-  alias Fundsjet.Products
   alias Fundsjet.Loans.FilterLoan
   # alias Fundsjet.Products.Product
   use Fundsjet.DataCase
@@ -12,7 +11,7 @@ defmodule Fundsjet.LoansTest do
   import Fundsjet.LoansFixtures
 
   describe "loans" do
-    setup [:create_product, :create_customer, :create_config]
+    setup [:create_product, :create_customer]
 
     @invalid_attrs %{
       "customer_id" => nil,
@@ -84,15 +83,12 @@ defmodule Fundsjet.LoansTest do
       product: product,
       customer: customer
     } do
-      product = Products.fetch_configs(product)
-      config = Products.build_configuration_map(product.configuration)
-
       loan_amount = 1000
-      commission_value = String.to_integer(config["loan_comission"].value) / 1.0
+      commission_value = Decimal.to_float(product.loan_comission)
 
       commission =
         cond do
-          config["commission_type"].value === "flat" ->
+          product.commission_type == "flat" ->
             commission_value
 
           true ->
@@ -111,14 +107,14 @@ defmodule Fundsjet.LoansTest do
 
       assert loan.meta == nil
       assert loan.status == "pending"
-      assert loan.term == String.to_integer(config["loan_term"].value)
+      assert loan.term == product.loan_term
       assert loan.uuid != nil
       assert loan.customer_id == customer.id
       assert loan.product_id == product.id
       assert loan.amount == Decimal.new(loan_amount)
       assert loan.commission == Decimal.from_float(commission)
       assert loan.maturity_date == nil
-      assert loan.duration == String.to_integer(config["loan_duration"].value)
+      assert loan.duration == product.loan_duration
       assert loan.disbursed_on == nil
       assert loan.closed_on == nil
 
@@ -138,22 +134,17 @@ defmodule Fundsjet.LoansTest do
       customer: customer
     } do
       product =
-        Fundsjet.ProductsFixtures.product_fixture(%{
+        create_loan_product_fixture(%{
           code: "testLoanProduct",
           require_approval: false
         })
 
-      _ = create_loan_configuration_fixture(product)
-
-      product = Products.fetch_configs(product)
-      config = Products.build_configuration_map(product.configuration)
-
       loan_amount = 1000
-      commission_value = String.to_integer(config["loan_comission"].value) / 1.0
+      commission_value = Decimal.to_float(product.loan_comission)
 
       commission =
         cond do
-          config["commission_type"].value === "flat" ->
+          product.commission_type === "flat" ->
             commission_value
 
           true ->
@@ -172,14 +163,14 @@ defmodule Fundsjet.LoansTest do
 
       assert loan.meta == nil
       assert loan.status == "approved"
-      assert loan.term == String.to_integer(config["loan_term"].value)
+      assert loan.term == product.loan_term
       assert loan.uuid != nil
       assert loan.customer_id == customer.id
       assert loan.product_id == product.id
       assert loan.amount == Decimal.new(loan_amount)
       assert loan.commission == Decimal.from_float(commission)
       assert loan.maturity_date == nil
-      assert loan.duration == String.to_integer(config["loan_duration"].value)
+      assert loan.duration == product.loan_duration
       assert loan.disbursed_on == nil
       assert loan.closed_on == nil
 
@@ -239,10 +230,5 @@ defmodule Fundsjet.LoansTest do
   defp create_customer(_) do
     customer = Fundsjet.CustomersFixtures.customer_fixture()
     %{customer: customer}
-  end
-
-  defp create_config(%{product: product}) do
-    _ = create_loan_configuration_fixture(product)
-    %{product: product}
   end
 end

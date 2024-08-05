@@ -390,8 +390,6 @@ defmodule Fundsjet.Loans do
 
   defp create_loan_attrs(%Product{} = product, attrs) do
     amount = Map.get(attrs, "amount")
-    product = Products.fetch_configs(product)
-    configuration = Products.build_configuration_map(product.configuration)
     disbursed_on = calc_disbursed_on(product.require_approval, Map.get(attrs, "disbursed_on"))
 
     %{
@@ -400,19 +398,19 @@ defmodule Fundsjet.Loans do
       product_id: product.id,
       commission:
         calc_commission(
-          configuration["commission_type"].value,
-          String.to_integer(configuration["loan_comission"].value),
+          product.commission_type,
+          Decimal.to_float(product.loan_comission),
           amount
         ),
       maturity_date:
         calc_loan_maturity(
           product.require_approval,
-          String.to_integer(configuration["loan_duration"].value),
+          product.loan_duration,
           disbursed_on
         ),
-      duration: String.to_integer(configuration["loan_duration"].value),
+      duration: product.loan_duration,
       status: calc_status(product.require_approval),
-      term: String.to_integer(configuration["loan_term"].value),
+      term: product.loan_term,
       disbursed_on: disbursed_on,
       created_by: Map.get(attrs, "created_by")
     }
