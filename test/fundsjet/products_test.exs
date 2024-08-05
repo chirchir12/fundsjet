@@ -14,7 +14,8 @@ defmodule Fundsjet.ProductsTest do
       "code" => nil,
       "name" => nil,
       "require_approval" => nil,
-      "require_docs" => nil
+      "require_docs" => nil,
+      "description" => nil
     }
 
     test "list/0 returns all products" do
@@ -46,6 +47,7 @@ defmodule Fundsjet.ProductsTest do
       valid_attrs = %{
         "code" => "testProduct",
         "name" => "test product",
+        "description" => "product description",
         "require_approval" => false,
         "require_docs" => false
       }

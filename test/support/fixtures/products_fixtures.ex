@@ -12,6 +12,7 @@ defmodule Fundsjet.ProductsFixtures do
       attrs
       |> Enum.into(%{
         code: "testProduct",
+        description: "test product",
         currency: "KES",
         end_date: ~D[2024-07-12],
         is_enabled: true,

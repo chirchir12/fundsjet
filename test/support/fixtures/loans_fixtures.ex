@@ -26,9 +26,10 @@ defmodule Fundsjet.LoansFixtures do
     attrs =
       attrs
       |> Enum.into(%{
-        "code" => "loanProduct",
-        "name" => "loan product",
+        "code" => "personal_loan",
+        "name" => "personal loan product",
         "status" => "approved",
+        "description" => "test loan product",
         "currency" => "KES",
         "is_enabled" => true,
         "require_approval" => true,
@@ -43,55 +44,55 @@ defmodule Fundsjet.LoansFixtures do
     _ =
       [
         %{
-          name: "loanDuration",
+          name: "loan_duration",
           value: "30",
           description: "loan Duration in days",
           product_id: product_id
         },
         %{
-          name: "repaymentTerm",
+          name: "repayment_term",
           value: "1",
           description: "Repayment is repaid after maturity",
           product_id: product_id
         },
         %{
-          name: "loanComission",
+          name: "loan_comission",
           value: "10",
           description: "Loan commission",
           product_id: product_id
         },
         %{
-          name: "loanTerm",
+          name: "loan_term",
           value: "1",
           description: "Loan Term for Repayment schedul",
           product_id: product_id
         },
         %{
-          name: "commissionType",
+          name: "commission_type",
           value: "percent",
           description: "Loan commission type",
           product_id: product_id
         },
         %{
-          name: "loanPenalty",
+          name: "loan_penalty",
           value: "50",
           description: "Loan Penalty",
           product_id: product_id
         },
         %{
-          name: "penaltyType",
+          name: "penalty_type",
           value: "flat",
           description: "Loan Penalty type",
           product_id: product_id
         },
         %{
-          name: "penaltyDuration",
+          name: "penalty_duration",
           value: "60",
           description: "maximum days to apply penalty",
           product_id: product_id
         },
         %{
-          name: "penaltyAfter",
+          name: "penalty_after",
           value: "5",
           description: "number of days to apply penalty after last penalty is applied",
           product_id: product_id

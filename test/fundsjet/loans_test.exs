@@ -88,11 +88,11 @@ defmodule Fundsjet.LoansTest do
       config = Products.build_configuration_map(product.configuration)
 
       loan_amount = 1000
-      commission_value = String.to_integer(config["loanComission"].value) / 1.0
+      commission_value = String.to_integer(config["loan_comission"].value) / 1.0
 
       commission =
         cond do
-          config["commissionType"].value === "flat" ->
+          config["commission_type"].value === "flat" ->
             commission_value
 
           true ->
@@ -111,14 +111,14 @@ defmodule Fundsjet.LoansTest do
 
       assert loan.meta == nil
       assert loan.status == "pending"
-      assert loan.term == String.to_integer(config["loanTerm"].value)
+      assert loan.term == String.to_integer(config["loan_term"].value)
       assert loan.uuid != nil
       assert loan.customer_id == customer.id
       assert loan.product_id == product.id
       assert loan.amount == Decimal.new(loan_amount)
       assert loan.commission == Decimal.from_float(commission)
       assert loan.maturity_date == nil
-      assert loan.duration == String.to_integer(config["loanDuration"].value)
+      assert loan.duration == String.to_integer(config["loan_duration"].value)
       assert loan.disbursed_on == nil
       assert loan.closed_on == nil
 
@@ -149,11 +149,11 @@ defmodule Fundsjet.LoansTest do
       config = Products.build_configuration_map(product.configuration)
 
       loan_amount = 1000
-      commission_value = String.to_integer(config["loanComission"].value) / 1.0
+      commission_value = String.to_integer(config["loan_comission"].value) / 1.0
 
       commission =
         cond do
-          config["commissionType"].value === "flat" ->
+          config["commission_type"].value === "flat" ->
             commission_value
 
           true ->
@@ -172,14 +172,14 @@ defmodule Fundsjet.LoansTest do
 
       assert loan.meta == nil
       assert loan.status == "approved"
-      assert loan.term == String.to_integer(config["loanTerm"].value)
+      assert loan.term == String.to_integer(config["loan_term"].value)
       assert loan.uuid != nil
       assert loan.customer_id == customer.id
       assert loan.product_id == product.id
       assert loan.amount == Decimal.new(loan_amount)
       assert loan.commission == Decimal.from_float(commission)
       assert loan.maturity_date == nil
-      assert loan.duration == String.to_integer(config["loanDuration"].value)
+      assert loan.duration == String.to_integer(config["loan_duration"].value)
       assert loan.disbursed_on == nil
       assert loan.closed_on == nil
 

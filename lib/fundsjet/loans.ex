@@ -400,19 +400,19 @@ defmodule Fundsjet.Loans do
       product_id: product.id,
       commission:
         calc_commission(
-          configuration["commissionType"].value,
-          String.to_integer(configuration["loanComission"].value),
+          configuration["commission_type"].value,
+          String.to_integer(configuration["loan_comission"].value),
           amount
         ),
       maturity_date:
         calc_loan_maturity(
           product.require_approval,
-          String.to_integer(configuration["loanDuration"].value),
+          String.to_integer(configuration["loan_duration"].value),
           disbursed_on
         ),
-      duration: String.to_integer(configuration["loanDuration"].value),
+      duration: String.to_integer(configuration["loan_duration"].value),
       status: calc_status(product.require_approval),
-      term: String.to_integer(configuration["loanTerm"].value),
+      term: String.to_integer(configuration["loan_term"].value),
       disbursed_on: disbursed_on,
       created_by: Map.get(attrs, "created_by")
     }
