@@ -6,7 +6,6 @@ defmodule Fundsjet.Loans do
   alias Fundsjet.Customers.Customer
   alias Fundsjet.Repo
   import Ecto.Query, warn: false
-  alias Fundsjet.Products
   alias Fundsjet.Products.Product
   alias Fundsjet.Loans.{Loan, LoanRepaymentSchedule, LoanReviewers, FilterLoan}
   require Logger
