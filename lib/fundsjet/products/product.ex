@@ -2,7 +2,7 @@ defmodule Fundsjet.Products.Product do
   use Ecto.Schema
   import Ecto.Changeset
 
-  @product_types ["loans"]
+  @product_types ["loans", "savings"]
   @commission_type ["flat", "percent"]
   @penalty_type ["flat", "percent"]
 
@@ -61,7 +61,7 @@ defmodule Fundsjet.Products.Product do
     field :code, :string
     field :name, :string
     field :status, :string, default: "approved"
-    field :type, :string, default: "loans"
+    field :type, :string
     field :description, :string
     field :currency, :string
     field :start_date, :date

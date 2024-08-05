@@ -13,8 +13,6 @@ defmodule Fundsjet.ProductsTest do
     @invalid_attrs %{
       "code" => nil,
       "name" => nil,
-      "require_approval" => nil,
-      "require_docs" => nil,
       "description" => nil
     }
 
@@ -43,13 +41,12 @@ defmodule Fundsjet.ProductsTest do
       assert {:error, :product_not_found} = Products.get(:code, "invalidCode")
     end
 
-    test "create_product/1 with valid data creates a product" do
+    test "create_product/1 with valid data creates a generic product" do
       valid_attrs = %{
         "code" => "testProduct",
         "name" => "test product",
-        "description" => "product description",
-        "require_approval" => false,
-        "require_docs" => false
+        "type" => "savings",
+        "description" => "product description"
       }
 
       assert {:ok, %Product{} = product} = Products.create(valid_attrs)
@@ -64,6 +61,242 @@ defmodule Fundsjet.ProductsTest do
       assert product.created_by == nil
       assert product.require_approval == false
       assert product.require_docs == false
+    end
+
+    test "create_product/1 with valid data creates a loan product" do
+      valid_attrs = %{
+        "code" => "personal_loan",
+        "description" => "Personal Loan",
+        "type" =>"loans",
+        "currency" => "KES",
+        "is_enabled" => true,
+        "name" => "personal loan",
+        "start_date" => ~D[2024-07-12],
+        "require_approval" => true,
+        "require_docs" => true,
+        "automatic_disbursement" => true,
+        "disbursement_fee" => 5,
+        "loan_duration" => 30,
+        "loan_term" => 1,
+        "loan_comission" => 10,
+        "commission_type" => "percent",
+        "loan_penalty" => 5,
+        "penalty_type" => "percent",
+        "penalty_duration" => 100,
+        "penalty_after" => 5
+      }
+
+      assert {:ok, %Product{} = product} = Products.create(valid_attrs)
+      assert product.code == "personal_loan"
+      assert product.name == "personal loan"
+      assert product.status == "approved"
+      assert product.currency == "KES"
+      assert product.start_date != nil
+      assert product.end_date == nil
+      assert product.is_enabled == true
+      assert product.updated_by == nil
+      assert product.created_by == nil
+      assert product.require_approval == true
+      assert product.require_docs == true
+      assert product.automatic_disbursement == true
+      assert product.disbursement_fee == Decimal.new(5)
+      assert product.loan_duration == 30
+      assert product.loan_term == 1
+      assert product.loan_comission == Decimal.new(10)
+      assert product.commission_type == "percent"
+      assert product.loan_penalty == Decimal.new(5)
+      assert product.penalty_type == "percent"
+      assert product.penalty_duration == 100
+      assert product.penalty_after == 5
+    end
+
+    test "create_product/1 throws error is loan_duration is missing for type loans" do
+      valid_attrs = %{
+        "code" => "personal_loan",
+        "description" => "Personal Loan",
+        "type" =>"loans",
+        "currency" => "KES",
+        "is_enabled" => true,
+        "name" => "personal loan",
+        "start_date" => ~D[2024-07-12],
+        "require_approval" => true,
+        "require_docs" => true,
+        "automatic_disbursement" => true,
+        "disbursement_fee" => 5,
+        # "loan_duration" => 30,
+        "loan_term" => 1,
+        "loan_comission" => 10,
+        "commission_type" => "percent",
+        "loan_penalty" => 5,
+        "penalty_type" => "percent",
+        "penalty_duration" => 100,
+        "penalty_after" => 5
+      }
+
+      assert {:error, %Changeset{}} = Products.create(valid_attrs)
+
+    end
+
+    test "create_product/1 throws error is loan_term is missing for type loans" do
+      valid_attrs = %{
+        "code" => "personal_loan",
+        "description" => "Personal Loan",
+        "type" =>"loans",
+        "currency" => "KES",
+        "is_enabled" => true,
+        "name" => "personal loan",
+        "start_date" => ~D[2024-07-12],
+        "require_approval" => true,
+        "require_docs" => true,
+        "automatic_disbursement" => true,
+        "disbursement_fee" => 5,
+        "loan_duration" => 30,
+        # "loan_term" => 1,
+        "loan_comission" => 10,
+        "commission_type" => "percent",
+        "loan_penalty" => 5,
+        "penalty_type" => "percent",
+        "penalty_duration" => 100,
+        "penalty_after" => 5
+      }
+
+      assert {:error, %Changeset{}} = Products.create(valid_attrs)
+
+    end
+
+    test "create_product/1 throws error is loan_comission is missing for type loans" do
+      valid_attrs = %{
+        "code" => "personal_loan",
+        "description" => "Personal Loan",
+        "type" =>"loans",
+        "currency" => "KES",
+        "is_enabled" => true,
+        "name" => "personal loan",
+        "start_date" => ~D[2024-07-12],
+        "require_approval" => true,
+        "require_docs" => true,
+        "automatic_disbursement" => true,
+        "disbursement_fee" => 5,
+        "loan_duration" => 30,
+        "loan_term" => 1,
+        # "loan_comission" => 10,
+        "commission_type" => "percent",
+        "loan_penalty" => 5,
+        "penalty_type" => "percent",
+        "penalty_duration" => 100,
+        "penalty_after" => 5
+      }
+
+      assert {:error, %Changeset{}} = Products.create(valid_attrs)
+
+    end
+
+    test "create_product/1 throws error is commission_type is missing for type loans" do
+      valid_attrs = %{
+        "code" => "personal_loan",
+        "description" => "Personal Loan",
+        "type" =>"loans",
+        "currency" => "KES",
+        "is_enabled" => true,
+        "name" => "personal loan",
+        "start_date" => ~D[2024-07-12],
+        "require_approval" => true,
+        "require_docs" => true,
+        "automatic_disbursement" => true,
+        "disbursement_fee" => 5,
+        "loan_duration" => 30,
+        "loan_term" => 1,
+        "loan_comission" => 10,
+        # "commission_type" => "percent",
+        "loan_penalty" => 5,
+        "penalty_type" => "percent",
+        "penalty_duration" => 100,
+        "penalty_after" => 5
+      }
+
+      assert {:error, %Changeset{}} = Products.create(valid_attrs)
+
+    end
+
+    test "create_product/1 throws error is loan_penalty is missing for type loans" do
+      valid_attrs = %{
+        "code" => "personal_loan",
+        "description" => "Personal Loan",
+        "type" =>"loans",
+        "currency" => "KES",
+        "is_enabled" => true,
+        "name" => "personal loan",
+        "start_date" => ~D[2024-07-12],
+        "require_approval" => true,
+        "require_docs" => true,
+        "automatic_disbursement" => true,
+        "disbursement_fee" => 5,
+        "loan_duration" => 30,
+        "loan_term" => 1,
+        "loan_comission" => 10,
+        "commission_type" => "percent",
+        # "loan_penalty" => 5,
+        "penalty_type" => "percent",
+        "penalty_duration" => 100,
+        "penalty_after" => 5
+      }
+
+      assert {:error, %Changeset{}} = Products.create(valid_attrs)
+
+    end
+
+    test "create_product/1 throws error is penalty_type is missing for type loans" do
+      valid_attrs = %{
+        "code" => "personal_loan",
+        "description" => "Personal Loan",
+        "type" =>"loans",
+        "currency" => "KES",
+        "is_enabled" => true,
+        "name" => "personal loan",
+        "start_date" => ~D[2024-07-12],
+        "require_approval" => true,
+        "require_docs" => true,
+        "automatic_disbursement" => true,
+        "disbursement_fee" => 5,
+        "loan_duration" => 30,
+        "loan_term" => 1,
+        "loan_comission" => 10,
+        "commission_type" => "percent",
+        "loan_penalty" => 5,
+        # "penalty_type" => "percent",
+        "penalty_duration" => 100,
+        "penalty_after" => 5
+      }
+
+      assert {:error, %Changeset{}} = Products.create(valid_attrs)
+
+    end
+
+    test "create_product/1 throws error is penalty_after is missing for type loans" do
+      valid_attrs = %{
+        "code" => "personal_loan",
+        "description" => "Personal Loan",
+        "type" =>"loans",
+        "currency" => "KES",
+        "is_enabled" => true,
+        "name" => "personal loan",
+        "start_date" => ~D[2024-07-12],
+        "require_approval" => true,
+        "require_docs" => true,
+        "automatic_disbursement" => true,
+        "disbursement_fee" => 5,
+        "loan_duration" => 30,
+        "loan_term" => 1,
+        "loan_comission" => 10,
+        "commission_type" => "percent",
+        "loan_penalty" => 5,
+        "penalty_type" => "percent",
+        "penalty_duration" => 100,
+        # "penalty_after" => 5
+      }
+
+      assert {:error, %Changeset{}} = Products.create(valid_attrs)
+
     end
 
     test "create_product/1 with existing code return error changeset" do
