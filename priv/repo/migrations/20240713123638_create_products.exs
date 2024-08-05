@@ -4,7 +4,9 @@ defmodule Fundsjet.Repo.Migrations.CreateProducts do
   def change do
     create table(:products) do
       add :name, :string, null: false
+      add :type, :string, null: false
       add :code, :string, null: false
+      add :description, :string, null: false
       add :currency, :string
       add :start_date, :date
       add :end_date, :date
@@ -14,6 +16,7 @@ defmodule Fundsjet.Repo.Migrations.CreateProducts do
       add :created_by, :integer
       add :require_approval, :boolean, default: false, null: false
       add :require_docs, :boolean, default: false, null: false
+      add :automatic_disbursement, :boolean, default: false, null: false
       add :approval_meta, :map
       add :documents_meta, :map
       add :additional_info, :map

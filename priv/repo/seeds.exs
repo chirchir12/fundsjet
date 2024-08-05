@@ -13,75 +13,74 @@
 config = Application.get_env(:fundsjet, Fundsjet.Products)
 
 # seed loan product if it is enabled
-if Keyword.get(config, :loan_product) and !Fundsjet.Products.product_exists?("loanProduct") do
+if Keyword.get(config, :loan_product) and !Fundsjet.Products.exists?("personal_loan") do
   {:ok, %Fundsjet.Products.Product{id: product_id}} =
     %{
-      code: "loanProduct",
-      name: "loan product",
-      status: "approved",
-      # todo get from env
+      code: "personal_loan",
+      name: "Personal Loan",
+      description: "Test loan personal loan",
       currency: "KES",
       is_enabled: true,
       require_approval: true,
       require_docs: true
     }
-    |> Fundsjet.Products.create_product()
+    |> Fundsjet.Products.create()
 
   [
     %{
-      name: "loanDuration",
+      name: "loan_duration",
       value: "30",
       description: "loan Duration in days",
       product_id: product_id
     },
     %{
-      name: "repaymentTerm",
+      name: "repayment_term",
       value: "1",
       description: "Repayment is repaid after maturity",
       product_id: product_id
     },
     %{
-      name: "loanComission",
+      name: "loan_comission",
       value: "10",
       description: "Loan commission",
       product_id: product_id
     },
     %{
-      name: "loanTerm",
+      name: "loan_term",
       value: "1",
       description: "Loan Term for Repayment schedul",
       product_id: product_id
     },
     %{
-      name: "commissionType",
+      name: "commission_type",
       value: "percent",
       description: "Loan commission type",
       product_id: product_id
     },
     %{
-      name: "loanPenalty",
+      name: "loan_penalty",
       value: "50",
       description: "Loan Penalty",
       product_id: product_id
     },
     %{
-      name: "penaltyType",
+      name: "penalty_type",
       value: "flat",
       description: "Loan Penalty type",
       product_id: product_id
     },
     %{
-      name: "penaltyDuration",
+      name: "penalty_duration",
       value: "60",
       description: "maximum days to apply penalty",
       product_id: product_id
     },
     %{
-      name: "penaltyAfter",
+      name: "penalty_after",
       value: "5",
       description: "number of days to apply penalty after last penalty is applied",
       product_id: product_id
     }
   ]
-  |> Fundsjet.Products.Cofigurations.create_configurations()
+  |> Fundsjet.Products.Configurations.create()
 end
