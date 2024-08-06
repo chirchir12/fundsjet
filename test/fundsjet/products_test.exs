@@ -21,14 +21,14 @@ defmodule Fundsjet.ProductsTest do
       assert Products.list() == [product]
     end
 
-    test "get/2 returns the product with given id" do
+    test "get/1 returns the product with given id" do
       new_product = product_fixture()
-      assert {:ok, product} = Products.get(:id, new_product.id)
+      assert {:ok, product} = Products.get(new_product.id)
       assert new_product == product
     end
 
-    test "get/2 returns the product with invalid id return error" do
-      assert {:error, :product_not_found} = Products.get(:id, 999)
+    test "get/1 returns the product with invalid id return error" do
+      assert {:error, :product_not_found} = Products.get(999)
     end
 
     test "get/2 returns the product with given code" do
@@ -339,14 +339,14 @@ defmodule Fundsjet.ProductsTest do
     test "update_product/2 with invalid data returns error changeset" do
       created_product = product_fixture()
       assert {:error, %Ecto.Changeset{}} = Products.update(created_product, @invalid_attrs)
-      assert {:ok, product} = Products.get(:id, created_product.id)
+      assert {:ok, product} = Products.get(created_product.id)
       assert created_product == product
     end
 
     test "delete_product/1 deletes the product" do
       product = product_fixture()
       assert {:ok, %Product{}} = Products.delete(product)
-      assert {:error, :product_not_found} = Products.get(:id, product.id)
+      assert {:error, :product_not_found} = Products.get(product.id)
     end
 
     test "fetch_configs/1 return with empty configurations" do
