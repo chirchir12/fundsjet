@@ -22,38 +22,7 @@ defmodule Fundsjet.Products do
     Repo.all(Product)
   end
 
-  @doc """
-  Fetches a product from the database based on the provided identifier type and value.
-
-  ## Parameters
-
-    - `:id`: Fetches a product by its ID.
-    - `:code`: Fetches a product by its code.
-
-  ## Examples
-
-    Fetching a product by ID:
-
-        iex> Fundsjet.Products.get(:id, 1)
-        {:ok, %Product{}}
-
-        iex> Fundsjet.Products.get(:id, 999)
-        {:error, :product_not_found}
-
-    Fetching a product by code:
-
-        iex> Fundsjet.Products.get(:code, "ABC123")
-        {:ok, %Product{}}
-
-        iex> Fundsjet.Products.get(:code, "non-existent-code")
-        {:error, :product_not_found}
-
-  ## Returns
-
-    - `{:ok, %Product{}}` if a product is found. The product will be preloaded with its configuration.
-    - `{:error, :product_not_found}` if no product is found.
-  """
-  def get(:id, id) do
+  def get(id) do
     case Repo.get(Product, id) do
       nil ->
         {:error, :product_not_found}
