@@ -4,14 +4,14 @@ defmodule Fundsjet.LoansTest do
   use Fundsjet.DataCase
 
   alias Fundsjet.Loans
-  alias Fundsjet.Loans.Loan
+  alias Fundsjet.Loans.{Loan, LoanReview}
 
   alias Fundsjet.Repo
 
   import Fundsjet.LoansFixtures
 
   describe "loans" do
-    setup [:create_product, :create_customer]
+    setup [:create_product, :create_customer, :create_staff]
 
     @invalid_attrs %{
       "customer_id" => nil,
@@ -207,6 +207,47 @@ defmodule Fundsjet.LoansTest do
                })
     end
 
+    test "approve_loan/2  approves loan that has been reviewed", %{
+      product: product,
+      customer: customer,
+      staff: staff
+    } do
+      # ensure the product require approval
+      assert product.require_approval == true
+
+      review_data = %{
+        "status" => "approved",
+        "comment" => "customer can take loan"
+      }
+
+      approval_data = %{
+        "status" => "approved",
+        "updated_by" => staff.id,
+        "updated_at" => DateTime.utc_now()
+      }
+
+      # create loan
+      loan = loan_fixture(product, customer)
+
+      # create reviewer
+      assert {:ok, %LoanReview{} = review} = Loans.add_reviewer(loan, staff, 1)
+      assert review.status == "pending"
+
+      #  ensure loan cannot be approved unless reviewed
+      assert {:error, :error_approving_loan} = Loans.approve_loan(loan, review_data)
+
+      # review loan
+
+      assert {:ok, %LoanReview{} = review} = Loans.add_review(loan, review, review_data)
+
+      assert review.status == "approved"
+
+      assert {:ok, %Loan{status: "in_review"} = loan} = Loans.get(loan.id)
+
+      assert {:ok, %Loan{status: "approved"}} = Loans.approve_loan(loan, approval_data )
+
+    end
+
     test "create_loan/3 throws error when customer is disabled", %{
       product: product,
       customer: customer
@@ -225,6 +266,11 @@ defmodule Fundsjet.LoansTest do
   defp create_product(_) do
     product = create_loan_product_fixture()
     %{product: product}
+  end
+
+  def create_staff(_) do
+    staff = Fundsjet.Identity.UsersFixtures.create_user_fixture()
+    %{staff: staff}
   end
 
   defp create_customer(_) do

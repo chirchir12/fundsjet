@@ -236,12 +236,18 @@ defmodule Fundsjet.Loans do
     end
   end
 
-  def add_review(review, params) do
-    with {:ok, review} <- LoanReviewers.add_review(review, params) do
+  def add_review(%Loan{status: "pending"} = loan, review, params) do
+    with {:ok, review} <- LoanReviewers.add_review(review, params),
+         {:ok, _loan} <- put_in_review(loan) do
       {:ok, review}
     end
   end
 
+  def add_review(%Loan{status: "in_review"}, review, params) do
+    with {:ok, review} <- LoanReviewers.add_review(review, params) do
+      {:ok, review}
+    end
+  end
   def get_review(loan_id, staff_id) do
     with {:ok, review} <- LoanReviewers.get_review(loan_id, staff_id) do
       {:ok, review}
@@ -264,7 +270,7 @@ defmodule Fundsjet.Loans do
   end
 
   def approve_loan(loan, _params) do
-    Logger.error("Cannot approve loan: #{inspect(loan)}")
+    Logger.error("Cannot approve loan: #{inspect(loan.uuid)} - #{inspect(loan.status)}")
     {:error, :error_approving_loan}
   end
 
@@ -276,6 +282,10 @@ defmodule Fundsjet.Loans do
 
   def put_in_review(%Loan{status: "in_review"} = loan) do
     {:ok, loan}
+  end
+
+  def put_in_review(_) do
+    {:error, :error_reviewing_loan}
   end
 
   def disburse_loan(loan, repayment_schedule, disbursement_date \\ Date.utc_today())

@@ -58,6 +58,15 @@ defmodule Fundsjet.Loans.Loan do
   end
 
   @doc false
+
+  def changeset(%__MODULE__{status: "in_review"} = loan, attrs) do
+    loan
+    |> cast(attrs, [:status, :updated_by, :updated_at])
+    |> validate_required([:status, :updated_by, :updated_at])
+    |> validate_inclusion(:status, ["approved", "rejected"], message: "invalid loan approval status")
+
+  end
+
   def changeset(loan, attrs) do
     loan
     |> cast(attrs, @permitted)
@@ -66,6 +75,7 @@ defmodule Fundsjet.Loans.Loan do
     |> unique_constraint(:uuid)
     |> validate_inclusion(:status, @allowed_status)
   end
+
 
   defp maybe_put_uuid(%Ecto.Changeset{valid?: true} = changeset) do
     if changeset.data.id do
@@ -79,4 +89,5 @@ defmodule Fundsjet.Loans.Loan do
   end
 
   defp maybe_put_uuid(changeset), do: changeset
+
 end

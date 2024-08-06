@@ -63,8 +63,7 @@ defmodule FundsjetWeb.LoanController do
          {:ok, loan} <- Loans.get(loan_id),
          {:ok, current_review} <- Loans.get_review(loan_id, staff_id),
          params <- Map.put(params, "loan_id", loan_id),
-         {:ok, new_review} <- Loans.add_review(current_review, params),
-         {:ok, _loan} <- Loans.put_in_review(loan) do
+         {:ok, new_review} <- Loans.add_review(loan, current_review, params) do
       conn
       |> put_status(:ok)
       |> render(:show, review: new_review)
