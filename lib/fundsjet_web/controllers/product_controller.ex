@@ -26,7 +26,7 @@ defmodule FundsjetWeb.ProductController do
   end
 
   def show(conn, %{"id" => id}) do
-    with {:ok, product} <- Products.get(:id, id) do
+    with {:ok, product} <- Products.get(id) do
       conn
       |> render(:show, product: product)
     end
@@ -34,7 +34,7 @@ defmodule FundsjetWeb.ProductController do
 
   def update(conn, %{"id" => id, "params" => params}) do
     with %User{id: current_user_id} <- conn.assigns[:auth_user],
-         {:ok, product} <- Products.get(:id, id),
+         {:ok, product} <- Products.get(id),
          params <- Map.put_new(params, "updated_by", current_user_id),
          {:ok, %Product{} = product} <- Products.update(product, params) do
       conn
@@ -43,7 +43,7 @@ defmodule FundsjetWeb.ProductController do
   end
 
   def delete(conn, %{"id" => id}) do
-    with {:ok, product} <- Products.get(:id, id),
+    with {:ok, product} <- Products.get(id),
          {:ok, %Product{}} <- Products.delete(product) do
       conn
       |> send_resp(:no_content, "")
@@ -52,7 +52,7 @@ defmodule FundsjetWeb.ProductController do
 
   def create_configuration(conn, %{"product_id" => product_id, "params" => params})
       when is_list(params) and length(params) > 0 do
-    with {:ok, _product} <- Products.get(:id, product_id),
+    with {:ok, _product} <- Products.get(product_id),
          params <-
            Enum.map(params, fn param -> Map.put_new(param, "product_id", product_id) end),
          {:ok, :ok} <- Configurations.create(params),
@@ -63,7 +63,7 @@ defmodule FundsjetWeb.ProductController do
   end
 
   def create_configuration(conn, %{"product_id" => product_id, "params" => params}) do
-    with {:ok, _product} <- Products.get(:id, product_id),
+    with {:ok, _product} <- Products.get(product_id),
          params <- Map.put_new(params, "product_id", product_id),
          {:ok, config} <- Configurations.create(params) do
       conn
@@ -72,7 +72,7 @@ defmodule FundsjetWeb.ProductController do
   end
 
   def list_configuration(conn, %{"product_id" => product_id}) do
-    with {:ok, _product} <- Products.get(:id, product_id),
+    with {:ok, _product} <- Products.get(product_id),
          configs <- Configurations.list(product_id) do
       conn
       |> render(:index, configs: configs)

@@ -7,7 +7,16 @@ defmodule Fundsjet.Loans do
   alias Fundsjet.Repo
   import Ecto.Query, warn: false
   alias Fundsjet.Products.Product
-  alias Fundsjet.Loans.{Loan, LoanRepaymentSchedule, LoanReviewers, FilterLoan}
+  alias Fundsjet.Products
+
+  alias Fundsjet.Loans.{
+    Loan,
+    LoanRepaymentSchedule,
+    LoanReviewers,
+    FilterLoan,
+    RepaymentSchedules
+  }
+
   require Logger
 
   @doc """
@@ -132,11 +141,27 @@ defmodule Fundsjet.Loans do
       iex> create_loan(%Product{id: 1, ...}, %Customer{id: 1, is_enabled: true}, %{amount: 1000, term: 12})
       {:error, reason}
   """
-  def create_loan(%Product{} = product, %Customer{is_enabled: true, id: customer_id}, params) do
+  def create_loan(
+        %Product{require_approval: false, automatic_disbursement: true} = product,
+        %Customer{is_enabled: true, id: customer_id},
+        params
+      ) do
     with {:ok, _valid_changeset} <- validate_loan(params),
          {:ok, :no_active_loan} <- check_active_loan(customer_id),
          {:ok, loan} <- save_loan(product, params),
-         {:ok, _repayment} <- save_repayment_schedule(loan, product) do
+         {:ok, _repayment} <- RepaymentSchedules.add(product, loan) do
+      {:ok, loan}
+    end
+  end
+
+  def create_loan(
+        %Product{} = product,
+        %Customer{is_enabled: true, id: customer_id},
+        params
+      ) do
+    with {:ok, _valid_changeset} <- validate_loan(params),
+         {:ok, :no_active_loan} <- check_active_loan(customer_id),
+         {:ok, loan} <- save_loan(product, params) do
       {:ok, loan}
     end
   end
@@ -163,63 +188,14 @@ defmodule Fundsjet.Loans do
     |> Repo.update()
   end
 
-  @doc """
-  Updates a loan repayment schedule with the given parameters.
-
-  ## Parameters
-
-    - `repayment_schedule`: A `%LoanRepaymentSchedule{}` struct representing the repayment schedule to be updated.
-    - `params`: A map containing the parameters to update the repayment schedule.
-
-  ## Returns
-
-    - `{:ok, %LoanRepaymentSchedule{}}`: If the repayment schedule is successfully updated.
-    - `{:error, %Ecto.Changeset{}}`: If there is an error in updating the repayment schedule, returns an error tuple with the changeset.
-
-  ## Examples
-
-      iex> update_repayment_schedule(%LoanRepaymentSchedule{id: 1, ...}, %{amount: 200})
-      {:ok, %LoanRepaymentSchedule{id: 1, amount: 200, ...}}
-
-      iex> update_repayment_schedule(%LoanRepaymentSchedule{id: 1, ...}, %{invalid_param: "value"})
-      {:error, %Ecto.Changeset{...}}
-  """
   def update_repayment_schedule(%LoanRepaymentSchedule{} = repayment_schedule, params) do
     repayment_schedule
     |> LoanRepaymentSchedule.changeset(params)
     |> Repo.update()
   end
 
-  @doc """
-  Fetches the repayment schedule for a given loan ID.
-
-  ## Parameters
-
-    - `loan_id`: The ID of the loan whose repayment schedule is to be fetched.
-
-  ## Returns
-
-    - `{:ok, %LoanRepaymentSchedule{}}`: If the repayment schedule is found.
-    - `{:error, :repayment_schedule_not_found}`: If no repayment schedule is found for the given loan ID.
-
-  ## Examples
-
-      iex> get_repayment_schedule(1)
-      {:ok, %LoanRepaymentSchedule{id: 1, loan_id: 1, ...}}
-
-      iex> get_repayment_schedule(999)
-      {:error, :repayment_schedule_not_found}
-  """
   def get_repayment_schedule(loan_id) do
-    query = from r in LoanRepaymentSchedule, where: r.loan_id == ^loan_id
-
-    case Repo.one(query) do
-      nil ->
-        {:error, :repayment_schedule_not_found}
-
-      schedule ->
-        {:ok, schedule}
-    end
+    RepaymentSchedules.list(loan_id)
   end
 
   # LOAN REVIEWS
@@ -248,6 +224,7 @@ defmodule Fundsjet.Loans do
       {:ok, review}
     end
   end
+
   def get_review(loan_id, staff_id) do
     with {:ok, review} <- LoanReviewers.get_review(loan_id, staff_id) do
       {:ok, review}
@@ -288,45 +265,31 @@ defmodule Fundsjet.Loans do
     {:error, :error_reviewing_loan}
   end
 
-  def disburse_loan(loan, repayment_schedule, disbursement_date \\ Date.utc_today())
+  def disburse_loan(loan, disbursement_date \\ Date.utc_today())
 
   def disburse_loan(
-        %Loan{status: "approved"} = loan,
-        %LoanRepaymentSchedule{} = repayment_schedule,
+        %Loan{status: "approved", product_id: product_id} = loan,
         disbursement_date
       ) do
-    maturity_date = calc_loan_maturity(false, loan.duration, disbursement_date)
-
     loan_attrs = %{
-      maturity_date: maturity_date,
+      maturity_date: calc_loan_maturity(false, loan.duration, disbursement_date),
       disbursed_on: disbursement_date,
       status: "disbursed"
     }
 
-    {:ok, loan} = update_loan(loan, loan_attrs)
-
-    repayment_schedule_attrs = %{
-      installment_date: calc_installmet_date(false, maturity_date),
-      next_penalty_date: calc_next_penalty_date(false, maturity_date)
-    }
-
-    with {:ok, loan} <- update_loan(loan, loan_attrs),
-         {:ok, _repayment} <-
-           update_repayment_schedule(repayment_schedule, repayment_schedule_attrs) do
+    with {:ok, product} <- Products.get(product_id),
+         {:ok, loan} <- update_loan(loan, loan_attrs),
+         {:ok, :ok} <- RepaymentSchedules.add(product, loan) do
       {:ok, loan}
     end
   end
 
-  def disburse_loan(%Loan{status: "disbursed"}, _repayment_schedule, _disbursement_date) do
+  def disburse_loan(%Loan{status: "disbursed"}, _disbursement_date) do
     {:error, :loan_has_been_disbursed}
   end
 
-  def disburse_loan(%Loan{status: "rejected"}, _repayment_schedule, _disbursement_date) do
+  def disburse_loan(%Loan{status: "rejected"}, _disbursement_date) do
     {:error, :cannot_approve_reject_loan}
-  end
-
-  def disburse_loan(_) do
-    {:error, :loan_has_not_been_approved}
   end
 
   def repay_loan(
@@ -339,8 +302,7 @@ defmodule Fundsjet.Loans do
     repayment_amount = params |> Map.get("amount")
 
     total_loan_amount =
-      Decimal.to_float(repayment_schedule.principal_amount) +
-        Decimal.to_float(repayment_schedule.commission) +
+      Decimal.to_float(repayment_schedule.installment_amount) +
         Decimal.to_float(repayment_schedule.penalty_fee)
 
     if repayment_amount < total_loan_amount do
@@ -389,14 +351,6 @@ defmodule Fundsjet.Loans do
     |> Repo.insert()
   end
 
-  defp save_repayment_schedule(loan, product) do
-    repayment_schedule_attrs = create_loan_repayment_schedule_attrs(loan, product)
-
-    %LoanRepaymentSchedule{}
-    |> LoanRepaymentSchedule.changeset(repayment_schedule_attrs)
-    |> Repo.insert()
-  end
-
   defp create_loan_attrs(%Product{} = product, attrs) do
     amount = Map.get(attrs, "amount")
     disbursed_on = calc_disbursed_on(product.require_approval, Map.get(attrs, "disbursed_on"))
@@ -422,19 +376,6 @@ defmodule Fundsjet.Loans do
       term: product.loan_term,
       disbursed_on: disbursed_on,
       created_by: Map.get(attrs, "created_by")
-    }
-  end
-
-  defp create_loan_repayment_schedule_attrs(loan, %Product{} = product) do
-    %{
-      loan_id: loan.id,
-      installment_date: calc_installmet_date(product.require_approval, loan.maturity_date),
-      principal_amount: loan.amount,
-      commission: loan.commission,
-      penalty_fee: 0,
-      status: "pending",
-      next_penalty_date: calc_next_penalty_date(product.require_approval, loan.maturity_date),
-      penalty_count: 0
     }
   end
 
@@ -481,27 +422,6 @@ defmodule Fundsjet.Loans do
     else
       "approved"
     end
-  end
-
-  defp calc_installmet_date(require_approval, maturity_date) when is_boolean(require_approval) do
-    if require_approval do
-      nil
-    else
-      maturity_date
-    end
-  end
-
-  defp calc_next_penalty_date(require_approval, maturity_date)
-       when is_boolean(require_approval) and not is_nil(maturity_date) do
-    if require_approval do
-      nil
-    else
-      Date.add(maturity_date, 1)
-    end
-  end
-
-  defp calc_next_penalty_date(_require_approval, nil) do
-    nil
   end
 
   defp validate_loan(attrs) do

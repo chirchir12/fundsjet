@@ -4,10 +4,9 @@ defmodule Fundsjet.Repo.Migrations.CreateLoanRepaymentSchedule do
   def change do
     create table(:loan_repayment_schedule) do
       add :loan_id, references(:loans), null: false
-      add :installment_date, :date, null: true
-      add :principal_amount, :decimal, null: false
-      add :commission, :decimal, null: false
-      add :penalty_fee, :decimal, null: false
+      add :installment_date, :date, null: false
+      add :installment_amount, :decimal, null: false
+      add :penalty_fee, :decimal, null: false, default: 0
       add :status, :string, null: false
       add :paid_on, :utc_datetime
       add :next_penalty_date, :date, null: true

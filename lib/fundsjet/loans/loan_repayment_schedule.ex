@@ -11,8 +11,7 @@ defmodule Fundsjet.Loans.LoanRepaymentSchedule do
   @permitted [
     :loan_id,
     :installment_date,
-    :principal_amount,
-    :commission,
+    :installment_amount,
     :penalty_fee,
     :status,
     :paid_on,
@@ -23,16 +22,14 @@ defmodule Fundsjet.Loans.LoanRepaymentSchedule do
 
   @required [
     :loan_id,
-    :principal_amount,
-    :commission,
-    :penalty_fee,
+    :installment_amount,
+    :installment_date,
     :status
   ]
 
   schema "loan_repayment_schedule" do
     field :installment_date, :date
-    field :principal_amount, :decimal
-    field :commission, :decimal
+    field :installment_amount, :decimal
     field :penalty_fee, :decimal
     field :status, :string
     field :paid_on, :utc_datetime

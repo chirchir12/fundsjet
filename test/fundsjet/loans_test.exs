@@ -103,7 +103,7 @@ defmodule Fundsjet.LoansTest do
                })
 
       loan_with_schedule = Repo.preload(loan, :loan_repayments)
-      assert length(loan_with_schedule.loan_repayments) == 1
+      assert length(loan_with_schedule.loan_repayments) == 0
 
       assert loan.meta == nil
       assert loan.status == "pending"
@@ -117,17 +117,6 @@ defmodule Fundsjet.LoansTest do
       assert loan.duration == product.loan_duration
       assert loan.disbursed_on == nil
       assert loan.closed_on == nil
-
-      # repayment schedule
-      [schedule | _] = loan_with_schedule.loan_repayments
-      assert schedule.installment_date == nil
-      assert schedule.commission == loan.commission
-      assert schedule.principal_amount == loan.amount
-      assert schedule.status == "pending"
-      assert schedule.meta == nil
-      assert schedule.penalty_count == 0
-      assert schedule.next_penalty_date == nil
-      assert schedule.penalty_fee == Decimal.new(0)
     end
 
     test "create_loan/3 with valid data creates a loan that does not require approval process", %{
@@ -136,7 +125,8 @@ defmodule Fundsjet.LoansTest do
       product =
         create_loan_product_fixture(%{
           code: "testLoanProduct",
-          require_approval: false
+          require_approval: false,
+          automatic_disbursement: false
         })
 
       loan_amount = 1000
@@ -159,7 +149,7 @@ defmodule Fundsjet.LoansTest do
                })
 
       loan_with_schedule = Repo.preload(loan, :loan_repayments)
-      assert length(loan_with_schedule.loan_repayments) == 1
+      assert length(loan_with_schedule.loan_repayments) == 0
 
       assert loan.meta == nil
       assert loan.status == "approved"
@@ -175,15 +165,15 @@ defmodule Fundsjet.LoansTest do
       assert loan.closed_on == nil
 
       # repayment schedule
-      [schedule | _] = loan_with_schedule.loan_repayments
-      assert schedule.installment_date == nil
-      assert schedule.commission == loan.commission
-      assert schedule.principal_amount == loan.amount
-      assert schedule.status == "pending"
-      assert schedule.meta == nil
-      assert schedule.penalty_count == 0
-      assert schedule.next_penalty_date == nil
-      assert schedule.penalty_fee == Decimal.new(0)
+      # [schedule | _] = loan_with_schedule.loan_repayments
+      # assert schedule.installment_date == nil
+      # assert schedule.commission == loan.commission
+      # assert schedule.principal_amount == loan.amount
+      # assert schedule.status == "pending"
+      # assert schedule.meta == nil
+      # assert schedule.penalty_count == 0
+      # assert schedule.next_penalty_date == nil
+      # assert schedule.penalty_fee == Decimal.new(0)
     end
 
     test "create_loan/3 with invalid data returns error changeset", %{
@@ -244,8 +234,7 @@ defmodule Fundsjet.LoansTest do
 
       assert {:ok, %Loan{status: "in_review"} = loan} = Loans.get(loan.id)
 
-      assert {:ok, %Loan{status: "approved"}} = Loans.approve_loan(loan, approval_data )
-
+      assert {:ok, %Loan{status: "approved"}} = Loans.approve_loan(loan, approval_data)
     end
 
     test "create_loan/3 throws error when customer is disabled", %{

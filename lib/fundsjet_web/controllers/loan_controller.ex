@@ -92,10 +92,9 @@ defmodule FundsjetWeb.LoanController do
 
   def disburse_loan(conn, %{"id" => loan_id, "params" => params}) do
     with {:ok, loan} <- Loans.get(loan_id),
-         {:ok, repayment_schedule} <- Loans.get_repayment_schedule(loan_id),
          disbursed_on <- Map.get(params, "disbursed_on"),
          {:ok, date} <- parse_date(disbursed_on),
-         {:ok, loan} <- Loans.disburse_loan(loan, repayment_schedule, date) do
+         {:ok, loan} <- Loans.disburse_loan(loan, date) do
       conn
       |> put_status(:ok)
       |> render(:show, loan: loan)
