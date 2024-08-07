@@ -1,4 +1,5 @@
 defmodule Fundsjet.LoansTest do
+  alias Fundsjet.Loans.LoanRepaymentSchedule
   alias Fundsjet.Loans.FilterLoan
   # alias Fundsjet.Products.Product
   use Fundsjet.DataCase
@@ -119,27 +120,18 @@ defmodule Fundsjet.LoansTest do
       assert loan.closed_on == nil
     end
 
-    test "create_loan/3 with valid data creates a loan that does not require approval process", %{
+    test "create_loan/3 with valid data creates a loan that does not require approval process and is not automatically disbursed", %{
       customer: customer
     } do
       product =
         create_loan_product_fixture(%{
           code: "testLoanProduct",
           require_approval: false,
-          automatic_disbursement: false
+          automatic_disbursement: false,
+          commission_type: "flat"
         })
 
       loan_amount = 1000
-      commission_value = Decimal.to_float(product.loan_comission)
-
-      commission =
-        cond do
-          product.commission_type === "flat" ->
-            commission_value
-
-          true ->
-            commission_value / 100 * loan_amount
-        end
 
       assert {:ok, %Loan{} = loan} =
                Loans.create_loan(product, customer, %{
@@ -158,23 +150,73 @@ defmodule Fundsjet.LoansTest do
       assert loan.customer_id == customer.id
       assert loan.product_id == product.id
       assert loan.amount == Decimal.new(loan_amount)
-      assert loan.commission == Decimal.from_float(commission)
+      assert loan.commission == Decimal.to_float(product.loan_comission) /1.0 |> Decimal.from_float()
       assert loan.maturity_date == nil
       assert loan.duration == product.loan_duration
       assert loan.disbursed_on == nil
       assert loan.closed_on == nil
+    end
+
+    test "create_loan/3 with valid data creates a loan that does not require approval process and is automatically disbursed", %{
+      customer: customer
+    } do
+      product =
+        create_loan_product_fixture(%{
+          code: "testLoanProduct",
+          require_approval: false,
+          automatic_disbursement: true,
+          loan_term: 3
+        })
+
+      loan_amount = 1000
+      commission_value = Decimal.to_float(product.loan_comission)
+      today = Date.utc_today()
+
+      commission =
+        cond do
+          product.commission_type === "flat" ->
+            commission_value
+
+          true ->
+            commission_value / 100 * loan_amount
+        end
+
+      assert {:ok, %Loan{} = loan} =
+               Loans.create_loan(product, customer, %{
+                 "amount" => loan_amount,
+                 "created_by" => customer.id,
+                 "customer_id" => customer.id,
+                 "disbursed_on" => today
+               })
+
+      loan_with_schedule = Repo.preload(loan, :loan_repayments)
+      assert length(loan_with_schedule.loan_repayments) == product.loan_term
+
+      assert loan.meta == nil
+      assert loan.status == "approved"
+      assert loan.term == product.loan_term
+      assert loan.uuid != nil
+      assert loan.customer_id == customer.id
+      assert loan.product_id == product.id
+      assert loan.amount == Decimal.new(loan_amount)
+      assert loan.commission == Decimal.from_float(commission)
+      assert loan.maturity_date == Date.add(today, product.loan_duration)
+      assert loan.duration == product.loan_duration
+      assert loan.disbursed_on == today
+      assert loan.closed_on == nil
+
+      total_amount_due = Decimal.to_float(loan.amount) + Decimal.to_float(loan.commission)
 
       # repayment schedule
-      # [schedule | _] = loan_with_schedule.loan_repayments
-      # assert schedule.installment_date == nil
-      # assert schedule.commission == loan.commission
-      # assert schedule.principal_amount == loan.amount
-      # assert schedule.status == "pending"
-      # assert schedule.meta == nil
-      # assert schedule.penalty_count == 0
-      # assert schedule.next_penalty_date == nil
-      # assert schedule.penalty_fee == Decimal.new(0)
+      Enum.with_index(loan_with_schedule.loan_repayments, 1)
+      |>Enum.each(fn {%LoanRepaymentSchedule{} = schedule, term} ->
+        assert Decimal.to_float(schedule.installment_amount) === total_amount_due/product.loan_term
+        assert schedule.installment_date === Date.add(today, term * product.loan_duration)
+        assert schedule.status == "pending"
+        assert schedule.penalty_fee == Decimal.new(0)
+        end)
     end
+
 
     test "create_loan/3 with invalid data returns error changeset", %{
       product: product,

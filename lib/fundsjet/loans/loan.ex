@@ -1,4 +1,5 @@
 defmodule Fundsjet.Loans.Loan do
+  alias Fundsjet.Products.Product
   use Ecto.Schema
   import Ecto.Changeset
 
@@ -68,6 +69,7 @@ defmodule Fundsjet.Loans.Loan do
     )
   end
 
+
   def changeset(loan, attrs) do
     loan
     |> cast(attrs, @permitted)
@@ -75,6 +77,12 @@ defmodule Fundsjet.Loans.Loan do
     |> maybe_put_uuid()
     |> unique_constraint(:uuid)
     |> validate_inclusion(:status, @allowed_status)
+  end
+
+  def changeset(%Product{automatic_disbursement: true, require_approval: false}, loan, attrs) do
+    loan
+    |> cast(attrs, @required ++ [:disbursed_on])
+    |> validate_required(@required ++ [:disbursed_on])
   end
 
   defp maybe_put_uuid(%Ecto.Changeset{valid?: true} = changeset) do

@@ -146,7 +146,7 @@ defmodule Fundsjet.Loans do
         %Customer{is_enabled: true, id: customer_id},
         params
       ) do
-    with {:ok, _valid_changeset} <- validate_loan(params),
+    with {:ok, _valid_changeset} <- validate_loan(product, params),
          {:ok, :no_active_loan} <- check_active_loan(customer_id),
          {:ok, loan} <- save_loan(product, params),
          {:ok, _repayment} <- RepaymentSchedules.add(product, loan) do
@@ -159,7 +159,7 @@ defmodule Fundsjet.Loans do
         %Customer{is_enabled: true, id: customer_id},
         params
       ) do
-    with {:ok, _valid_changeset} <- validate_loan(params),
+    with {:ok, _valid_changeset} <- validate_loan(product, params),
          {:ok, :no_active_loan} <- check_active_loan(customer_id),
          {:ok, loan} <- save_loan(product, params) do
       {:ok, loan}
@@ -424,7 +424,16 @@ defmodule Fundsjet.Loans do
     end
   end
 
-  defp validate_loan(attrs) do
+  defp validate_loan(%Product{automatic_disbursement: true, require_approval: false}=product, attrs) do
+    changeset = Loan.changeset(product, %Loan{}, attrs)
+
+    case changeset.valid? do
+      true -> {:ok, changeset}
+      false -> {:error, changeset}
+    end
+  end
+
+  defp validate_loan(_product, attrs) do
     changeset = Loan.changeset(%Loan{}, attrs)
 
     case changeset.valid? do
