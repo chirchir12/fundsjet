@@ -251,20 +251,6 @@ defmodule Fundsjet.Loans do
     {:error, :error_approving_loan}
   end
 
-  def put_in_review(%Loan{status: "pending"} = loan) do
-    with {:ok, loan} = update_loan(loan, %{status: "in_review"}) do
-      {:ok, loan}
-    end
-  end
-
-  def put_in_review(%Loan{status: "in_review"} = loan) do
-    {:ok, loan}
-  end
-
-  def put_in_review(_) do
-    {:error, :error_reviewing_loan}
-  end
-
   def disburse_loan(loan, disbursement_date \\ Date.utc_today())
 
   def disburse_loan(
@@ -272,7 +258,7 @@ defmodule Fundsjet.Loans do
         disbursement_date
       ) do
     loan_attrs = %{
-      maturity_date: calc_loan_maturity(false, loan.duration, disbursement_date),
+      maturity_date: Date.add(disbursement_date, loan.duration),
       disbursed_on: disbursement_date,
       status: "disbursed"
     }
@@ -359,48 +345,38 @@ defmodule Fundsjet.Loans do
       amount: amount,
       customer_id: Map.get(attrs, "customer_id"),
       product_id: product.id,
-      commission:
-        calc_commission(
-          product.commission_type,
-          Decimal.to_float(product.loan_comission),
-          amount
-        ),
-      maturity_date:
-        calc_loan_maturity(
-          product.require_approval,
-          product.loan_duration,
-          disbursed_on
-        ),
+      commission: calc_commission(product, amount),
+      maturity_date: calc_loan_maturity(product, disbursed_on),
       duration: product.loan_duration,
-      status: calc_status(product.require_approval),
+      status: calc_status(product),
       term: product.loan_term,
       disbursed_on: disbursed_on,
       created_by: Map.get(attrs, "created_by")
     }
   end
 
-  defp calc_commission("percent", value, amount) do
-    value / 100 * amount
+  defp calc_commission(%Product{commission_type: "percent", loan_comission: value}, amount) do
+    Decimal.to_float(value) / 100 * amount
   end
 
-  defp calc_commission("flat", value, _amount) do
-    value
+  defp calc_commission(%Product{commission_type: "flat", loan_comission: value}, _amount) do
+    Decimal.to_float(value)
   end
 
-  defp calc_commission(_type, _value, nil) do
+  defp calc_commission(_product, nil) do
     nil
   end
 
-  defp calc_loan_maturity(require_approval, duration, disbursed_on)
-       when is_boolean(require_approval) and not is_nil(disbursed_on) do
-    if require_approval do
+  defp calc_loan_maturity(%Product{} = product, disbursed_on)
+       when is_boolean(product.require_approval) and not is_nil(disbursed_on) do
+    if product.require_approval do
       nil
     else
-      Date.add(disbursed_on, duration)
+      Date.add(disbursed_on, product.loan_duration)
     end
   end
 
-  defp calc_loan_maturity(_require_approval, _duration, nil) do
+  defp calc_loan_maturity(_product, nil) do
     nil
   end
 
@@ -416,7 +392,12 @@ defmodule Fundsjet.Loans do
     nil
   end
 
-  defp calc_status(require_approval) when is_boolean(require_approval) do
+  defp calc_status(%Product{require_approval: false, automatic_disbursement: true}) do
+    "disbursed"
+  end
+
+  defp calc_status(%Product{require_approval: require_approval})
+       when is_boolean(require_approval) do
     if require_approval do
       "pending"
     else
@@ -424,7 +405,10 @@ defmodule Fundsjet.Loans do
     end
   end
 
-  defp validate_loan(%Product{automatic_disbursement: true, require_approval: false}=product, attrs) do
+  defp validate_loan(
+         %Product{automatic_disbursement: true, require_approval: false} = product,
+         attrs
+       ) do
     changeset = Loan.changeset(product, %Loan{}, attrs)
 
     case changeset.valid? do
@@ -440,5 +424,15 @@ defmodule Fundsjet.Loans do
       true -> {:ok, changeset}
       false -> {:error, changeset}
     end
+  end
+
+  defp put_in_review(%Loan{status: "pending"} = loan) do
+    with {:ok, loan} = update_loan(loan, %{status: "in_review"}) do
+      {:ok, loan}
+    end
+  end
+
+  defp put_in_review(_) do
+    {:error, :error_reviewing_loan}
   end
 end

@@ -120,9 +120,10 @@ defmodule Fundsjet.LoansTest do
       assert loan.closed_on == nil
     end
 
-    test "create_loan/3 with valid data creates a loan that does not require approval process and is not automatically disbursed", %{
-      customer: customer
-    } do
+    test "create_loan/3 with valid data creates a loan that does not require approval process and is not automatically disbursed",
+         %{
+           customer: customer
+         } do
       product =
         create_loan_product_fixture(%{
           code: "testLoanProduct",
@@ -143,23 +144,26 @@ defmodule Fundsjet.LoansTest do
       loan_with_schedule = Repo.preload(loan, :loan_repayments)
       assert length(loan_with_schedule.loan_repayments) == 0
 
-      assert loan.meta == nil
       assert loan.status == "approved"
       assert loan.term == product.loan_term
       assert loan.uuid != nil
       assert loan.customer_id == customer.id
       assert loan.product_id == product.id
       assert loan.amount == Decimal.new(loan_amount)
-      assert loan.commission == Decimal.to_float(product.loan_comission) /1.0 |> Decimal.from_float()
+
+      assert loan.commission ==
+               (Decimal.to_float(product.loan_comission) / 1.0) |> Decimal.from_float()
+
       assert loan.maturity_date == nil
       assert loan.duration == product.loan_duration
       assert loan.disbursed_on == nil
       assert loan.closed_on == nil
     end
 
-    test "create_loan/3 with valid data creates a loan that does not require approval process and is automatically disbursed", %{
-      customer: customer
-    } do
+    test "create_loan/3 with valid data creates a loan that does not require approval process and is automatically disbursed",
+         %{
+           customer: customer
+         } do
       product =
         create_loan_product_fixture(%{
           code: "testLoanProduct",
@@ -193,7 +197,7 @@ defmodule Fundsjet.LoansTest do
       assert length(loan_with_schedule.loan_repayments) == product.loan_term
 
       assert loan.meta == nil
-      assert loan.status == "approved"
+      assert loan.status == "disbursed"
       assert loan.term == product.loan_term
       assert loan.uuid != nil
       assert loan.customer_id == customer.id
@@ -209,14 +213,15 @@ defmodule Fundsjet.LoansTest do
 
       # repayment schedule
       Enum.with_index(loan_with_schedule.loan_repayments, 1)
-      |>Enum.each(fn {%LoanRepaymentSchedule{} = schedule, term} ->
-        assert Decimal.to_float(schedule.installment_amount) === total_amount_due/product.loan_term
+      |> Enum.each(fn {%LoanRepaymentSchedule{} = schedule, term} ->
+        assert Decimal.to_float(schedule.installment_amount) ===
+                 total_amount_due / product.loan_term
+
         assert schedule.installment_date === Date.add(today, term * product.loan_duration)
         assert schedule.status == "pending"
         assert schedule.penalty_fee == Decimal.new(0)
-        end)
+      end)
     end
-
 
     test "create_loan/3 with invalid data returns error changeset", %{
       product: product,

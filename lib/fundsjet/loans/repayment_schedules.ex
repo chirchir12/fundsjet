@@ -26,19 +26,15 @@ defmodule Fundsjet.Loans.RepaymentSchedules do
     end)
   end
 
-  defp generate_schedules(%Product{loan_term: loan_term, loan_duration: loan_duration}, %Loan{
-         disbursed_on: disbursed_on,
-         id: loan_id,
-         amount: amount,
-         commission: comission
-       }) do
-    1..loan_term
+  defp generate_schedules(%Product{} = product, %Loan{} = loan) do
+    1..product.loan_term
     |> Enum.map(fn term ->
       %LoanRepaymentSchedule{
-        loan_id: loan_id,
+        loan_id: loan.id,
         status: "pending",
-        installment_amount: (Decimal.to_float(amount) + Decimal.to_float(comission)) / loan_term,
-        installment_date: Date.add(disbursed_on, term * loan_duration)
+        installment_amount:
+          (Decimal.to_float(loan.amount) + Decimal.to_float(loan.commission)) / product.loan_term,
+        installment_date: Date.add(loan.disbursed_on, term * product.loan_duration)
       }
     end)
   end

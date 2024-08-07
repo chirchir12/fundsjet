@@ -69,7 +69,6 @@ defmodule Fundsjet.Loans.Loan do
     )
   end
 
-
   def changeset(loan, attrs) do
     loan
     |> cast(attrs, @permitted)
