@@ -274,8 +274,12 @@ defmodule Fundsjet.Loans do
     {:error, :loan_has_been_disbursed}
   end
 
+  def disburse_loan(%Loan{status: "pending"}, _disbursement_date) do
+    {:error, :loan_has_not_been_approved}
+  end
+
   def disburse_loan(%Loan{status: "rejected"}, _disbursement_date) do
-    {:error, :cannot_approve_reject_loan}
+    {:error, :cannot_disburse_rejected_loan}
   end
 
   def repay_loan(

@@ -284,6 +284,63 @@ defmodule Fundsjet.LoansTest do
       assert {:ok, %Loan{status: "approved"}} = Loans.approve_loan(loan, approval_data)
     end
 
+    test "disburse/2  disburse only loans that have been approved", %{
+      product: product,
+      customer: customer,
+      staff: staff
+    } do
+      # ensure the product require approval
+      assert product.require_approval == true
+      today = Date.utc_today()
+
+      review_data = %{
+        "status" => "approved",
+        "comment" => "customer can take loan"
+      }
+
+      approval_data = %{
+        "status" => "approved",
+        "updated_by" => staff.id,
+        "updated_at" => DateTime.utc_now()
+      }
+
+      # create loan
+      loan = loan_fixture(product, customer)
+
+      assert {:error, :loan_has_not_been_approved} = Loans.disburse_loan(loan, Date.utc_today())
+
+      # create reviewer
+      assert {:ok, %LoanReview{} = review} = Loans.add_reviewer(loan, staff, 1)
+
+      # review loan
+      assert {:ok, %LoanReview{} = review} = Loans.add_review(loan, review, review_data)
+
+      assert review.status == "approved"
+
+      assert {:ok, %Loan{status: "in_review"} = loan} = Loans.get(loan.id)
+
+      assert {:ok, %Loan{status: "approved"}  = loan} = Loans.approve_loan(loan, approval_data)
+
+      assert {:ok, %Loan{status: "disbursed"} = loan} = Loans.disburse_loan(loan, today)
+
+      assert {:error, :loan_has_been_disbursed} = Loans.disburse_loan(loan, today)
+
+      loan_with_schedule = Repo.preload(loan, :loan_repayments)
+      assert length(loan_with_schedule.loan_repayments) == product.loan_term
+
+      assert loan.maturity_date == Date.add(today, product.loan_duration)
+
+      # repayment schedule
+      Stream.with_index(loan_with_schedule.loan_repayments, 1)
+      |> Enum.each(fn {%LoanRepaymentSchedule{} = schedule, term} ->
+        assert schedule.installment_date === Date.add(today, term * product.loan_duration)
+        assert schedule.status == "pending"
+        assert schedule.penalty_fee == Decimal.new(0)
+      end)
+
+    end
+
+
     test "create_loan/3 throws error when customer is disabled", %{
       product: product,
       customer: customer
