@@ -212,7 +212,7 @@ defmodule Fundsjet.LoansTest do
       total_amount_due = Decimal.to_float(loan.amount) + Decimal.to_float(loan.commission)
 
       # repayment schedule
-      Enum.with_index(loan_with_schedule.loan_repayments, 1)
+      Stream.with_index(loan_with_schedule.loan_repayments, 1)
       |> Enum.each(fn {%LoanRepaymentSchedule{} = schedule, term} ->
         assert Decimal.to_float(schedule.installment_amount) ===
                  total_amount_due / product.loan_term
