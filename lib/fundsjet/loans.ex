@@ -11,10 +11,9 @@ defmodule Fundsjet.Loans do
 
   alias Fundsjet.Loans.{
     Loan,
-    LoanRepaymentSchedule,
-    LoanReviewers,
-    FilterLoan,
-    RepaymentSchedules
+    LoanSchedule,
+    LoanReview,
+    FilterLoan
   }
 
   require Logger
@@ -149,7 +148,7 @@ defmodule Fundsjet.Loans do
     with {:ok, _valid_changeset} <- validate_loan(product, params),
          {:ok, :no_active_loan} <- check_active_loan(customer_id),
          {:ok, loan} <- save_loan(product, params),
-         {:ok, _repayment} <- RepaymentSchedules.add(product, loan) do
+         {:ok, _repayment} <- LoanSchedule.add(product, loan) do
       {:ok, loan}
     end
   end
@@ -188,51 +187,45 @@ defmodule Fundsjet.Loans do
     |> Repo.update()
   end
 
-  def update_repayment_schedule(%LoanRepaymentSchedule{} = repayment_schedule, params) do
-    repayment_schedule
-    |> LoanRepaymentSchedule.changeset(params)
-    |> Repo.update()
-  end
-
   def get_repayment_schedule(loan_id) do
-    RepaymentSchedules.list(loan_id)
+    LoanSchedule.list(loan_id)
   end
 
   # LOAN REVIEWS
 
   def add_reviewer(%Loan{} = loan, %User{} = staff, priority) do
-    with {:ok, reviewer} <- LoanReviewers.add_reviewer(loan, staff, priority) do
+    with {:ok, reviewer} <- LoanReview.add_reviewer(loan, staff, priority) do
       {:ok, reviewer}
     end
   end
 
   def list_reviews(loan_id) do
-    with reviews <- LoanReviewers.get_reviews(loan_id) do
+    with reviews <- LoanReview.get_reviews(loan_id) do
       {:ok, reviews}
     end
   end
 
   def add_review(%Loan{status: "pending"} = loan, review, params) do
-    with {:ok, review} <- LoanReviewers.add_review(review, params),
+    with {:ok, review} <- LoanReview.add_review(review, params),
          {:ok, _loan} <- put_in_review(loan) do
       {:ok, review}
     end
   end
 
   def add_review(%Loan{status: "in_review"}, review, params) do
-    with {:ok, review} <- LoanReviewers.add_review(review, params) do
+    with {:ok, review} <- LoanReview.add_review(review, params) do
       {:ok, review}
     end
   end
 
   def get_review(loan_id, staff_id) do
-    with {:ok, review} <- LoanReviewers.get_review(loan_id, staff_id) do
+    with {:ok, review} <- LoanReview.get_review(loan_id, staff_id) do
       {:ok, review}
     end
   end
 
   def loan_has_pending_reviews?(loan_id) do
-    LoanReviewers.is_in_review?(loan_id)
+    LoanReview.is_in_review?(loan_id)
   end
 
   def approve_loan(%Loan{status: "in_review"} = loan, params) do
@@ -265,7 +258,7 @@ defmodule Fundsjet.Loans do
 
     with {:ok, product} <- Products.get(product_id),
          {:ok, loan} <- update_loan(loan, loan_attrs),
-         {:ok, :ok} <- RepaymentSchedules.add(product, loan) do
+         {:ok, :ok} <- LoanSchedule.add(product, loan) do
       {:ok, loan}
     end
   end
@@ -282,40 +275,35 @@ defmodule Fundsjet.Loans do
     {:error, :cannot_disburse_rejected_loan}
   end
 
-  def repay_loan(
-        %Loan{status: status} = loan,
-        %LoanRepaymentSchedule{} = repayment_schedule,
-        params
-      )
-      when status in ["late", "disbursed"] do
-    # todo. this should repayment full amount for now
-    repayment_amount = params |> Map.get("amount")
+  # def repay_loan(%Loan{status: status} = loan,params)
+  #     when status in ["late", "disbursed"] do
+  #   # repayment_amount = params |> Map.get("amount")
 
-    total_loan_amount =
-      Decimal.to_float(repayment_schedule.installment_amount) +
-        Decimal.to_float(repayment_schedule.penalty_fee)
+  #   repayment_schedules = Repo.preload(loan, :loan_repayments)
 
-    if repayment_amount < total_loan_amount do
-      {:error, :repayment_amount_lower_than_loan_amount}
-    else
-      repayment_schedule_attrs = %{
-        status: "paid",
-        meta: Map.merge(repayment_schedule.meta || %{}, params),
-        paid_on: DateTime.utc_now()
-      }
+  #   total_loan_amount = Enum.reduce(repayment_schedules, &calc_total_loan_amount/1)
 
-      loan_attrs = %{
-        status: "paid",
-        closed_on: Date.utc_today()
-      }
+  #   # if repayment_amount < total_loan_amount do
+  #   #   {:error, :repayment_amount_lower_than_loan_amount}
+  #   # else
+  #   #   repayment_schedule_attrs = %{
+  #   #     status: "paid",
+  #   #     meta: Map.merge(repayment_schedule.meta || %{}, params),
+  #   #     paid_on: DateTime.utc_now()
+  #   #   }
 
-      with {:ok, _repayment} <-
-             update_repayment_schedule(repayment_schedule, repayment_schedule_attrs),
-           {:ok, loan} <- update_loan(loan, loan_attrs) do
-        {:ok, loan}
-      end
-    end
-  end
+  #   #   loan_attrs = %{
+  #   #     status: "paid",
+  #   #     closed_on: Date.utc_today()
+  #   #   }
+
+  #   #   with {:ok, _repayment} <-
+  #   #          update_repayment_schedule(repayment_schedule, repayment_schedule_attrs),
+  #   #        {:ok, loan} <- update_loan(loan, loan_attrs) do
+  #   #     {:ok, loan}
+  #   #   end
+  #   # end
+  # end
 
   def repay_loan(
         %Loan{status: "paid"},
@@ -438,5 +426,31 @@ defmodule Fundsjet.Loans do
 
   defp put_in_review(_) do
     {:error, :error_reviewing_loan}
+  end
+
+  defp calc_total_loan_amount(%LoanSchedule{} = schedule) do
+    Decimal.to_float(schedule.installment_amount) + Decimal.to_float(schedule.penalty_fee)
+  end
+
+  defp generate_repayments(schedules, amount, repayments \\ []) do
+    schedules
+    |> gen_repayment_tx(amount, repayments)
+  end
+
+  defp gen_repayment_tx([], _amount, repayments) do
+    {:ok, repayments, []}
+  end
+
+  defp gen_repayment_tx([%LoanSchedule{installment_amount: install_amount} = schedule | schedules], amount, repayments) when amount >= install_amount do
+    new_amount = amount - calc_total_loan_amount(schedule)
+    repayment = %{loan_id: schedule.loan_id, schedule_id: schedule.id, amount: install_amount, paid: true }
+    repayments = [repayment | repayments]
+    gen_repayment_tx(schedules, new_amount, repayments)
+  end
+
+  defp gen_repayment_tx([%LoanSchedule{installment_amount: install_amount} = schedule | schedules], amount, repayments) when amount < install_amount do
+    repayment = %{loan_id: schedule.loan_id, schedule_id: schedule.id, amount: amount, paid: false }
+    repayments = [repayment | repayments]
+    {:ok, repayments, schedules}
   end
 end

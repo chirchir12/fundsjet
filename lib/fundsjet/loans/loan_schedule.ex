@@ -31,7 +31,7 @@ defmodule Fundsjet.Loans.LoanSchedule do
     :status
   ]
 
-  schema "loan_repayment_schedule" do
+  schema "loan_schedules" do
     field :installment_date, :date
     field :installment_amount, :decimal
     field :penalty_fee, :decimal
@@ -44,6 +44,8 @@ defmodule Fundsjet.Loans.LoanSchedule do
     timestamps(type: :utc_datetime)
     # loan_id
     belongs_to :loan, Loan
+    has_many :schedules, Fundsjet.Loans.Repayment
+
   end
 
   @doc false

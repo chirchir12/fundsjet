@@ -56,6 +56,7 @@ defmodule Fundsjet.Loans.Loan do
 
     has_many :loan_schedules, Fundsjet.Loans.LoanSchedule
     has_many :loan_reviews, Fundsjet.Loans.LoanReview
+    has_many :loan_repayments, Fundsjet.Loans.Repayment
   end
 
   @doc false
