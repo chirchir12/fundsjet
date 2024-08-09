@@ -1,5 +1,5 @@
 defmodule Fundsjet.LoansTest do
-  alias Fundsjet.Loans.LoanRepaymentSchedule
+  alias Fundsjet.Loans.LoanSchedule
   alias Fundsjet.Loans.FilterLoan
   # alias Fundsjet.Products.Product
   use Fundsjet.DataCase
@@ -103,8 +103,8 @@ defmodule Fundsjet.LoansTest do
                  "customer_id" => customer.id
                })
 
-      loan_with_schedule = Repo.preload(loan, :loan_repayments)
-      assert length(loan_with_schedule.loan_repayments) == 0
+      loan_with_schedule = Repo.preload(loan, :loan_schedules)
+      assert length(loan_with_schedule.loan_schedules) == 0
 
       assert loan.meta == nil
       assert loan.status == "pending"
@@ -141,8 +141,8 @@ defmodule Fundsjet.LoansTest do
                  "customer_id" => customer.id
                })
 
-      loan_with_schedule = Repo.preload(loan, :loan_repayments)
-      assert length(loan_with_schedule.loan_repayments) == 0
+      loan_with_schedule = Repo.preload(loan, :loan_schedules)
+      assert length(loan_with_schedule.loan_schedules) == 0
 
       assert loan.status == "approved"
       assert loan.term == product.loan_term
@@ -193,8 +193,8 @@ defmodule Fundsjet.LoansTest do
                  "disbursed_on" => today
                })
 
-      loan_with_schedule = Repo.preload(loan, :loan_repayments)
-      assert length(loan_with_schedule.loan_repayments) == product.loan_term
+      loan_with_schedule = Repo.preload(loan, :loan_schedules)
+      assert length(loan_with_schedule.loan_schedules) == product.loan_term
 
       assert loan.meta == nil
       assert loan.status == "disbursed"
@@ -212,8 +212,8 @@ defmodule Fundsjet.LoansTest do
       total_amount_due = Decimal.to_float(loan.amount) + Decimal.to_float(loan.commission)
 
       # repayment schedule
-      Stream.with_index(loan_with_schedule.loan_repayments, 1)
-      |> Enum.each(fn {%LoanRepaymentSchedule{} = schedule, term} ->
+      Stream.with_index(loan_with_schedule.loan_schedules, 1)
+      |> Enum.each(fn {%LoanSchedule{} = schedule, term} ->
         assert Decimal.to_float(schedule.installment_amount) ===
                  total_amount_due / product.loan_term
 
@@ -325,14 +325,14 @@ defmodule Fundsjet.LoansTest do
 
       assert {:error, :loan_has_been_disbursed} = Loans.disburse_loan(loan, today)
 
-      loan_with_schedule = Repo.preload(loan, :loan_repayments)
-      assert length(loan_with_schedule.loan_repayments) == product.loan_term
+      loan_with_schedule = Repo.preload(loan, :loan_schedules)
+      assert length(loan_with_schedule.loan_schedules) == product.loan_term
 
       assert loan.maturity_date == Date.add(today, product.loan_duration)
 
       # repayment schedule
-      Stream.with_index(loan_with_schedule.loan_repayments, 1)
-      |> Enum.each(fn {%LoanRepaymentSchedule{} = schedule, term} ->
+      Stream.with_index(loan_with_schedule.loan_schedules, 1)
+      |> Enum.each(fn {%LoanSchedule{} = schedule, term} ->
         assert schedule.installment_date === Date.add(today, term * product.loan_duration)
         assert schedule.status == "pending"
         assert schedule.penalty_fee == Decimal.new(0)
