@@ -79,7 +79,6 @@ defmodule Fundsjet.Loans.LoanSchedule do
     |> Enum.map(&calc_total_loan_amount/1)
     |> Enum.map(&calc_total_repaid_amount/1)
     |> Enum.map(&cacl_remaining_amount/1)
-    |> IO.inspect()
   end
 
   def list(loan_id, status) do
