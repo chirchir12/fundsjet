@@ -64,7 +64,7 @@ defmodule Fundsjet.Loans.LoanReview do
     }
 
     %__MODULE__{}
-    |>changeset(attrs)
+    |> changeset(attrs)
     |> Repo.insert()
     |> case do
       {:ok, reviewer} ->

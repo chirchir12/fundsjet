@@ -13,7 +13,8 @@ defmodule Fundsjet.Loans do
     Loan,
     LoanSchedule,
     LoanReview,
-    FilterLoan
+    FilterLoan,
+    Repayment
   }
 
   require Logger
@@ -275,35 +276,24 @@ defmodule Fundsjet.Loans do
     {:error, :cannot_disburse_rejected_loan}
   end
 
-  # def repay_loan(%Loan{status: status} = loan,params)
-  #     when status in ["late", "disbursed"] do
-  #   # repayment_amount = params |> Map.get("amount")
+  def repay_loan(%Loan{status: status} = loan, params)
+      when status in ["late", "disbursed"] do
+    amount = params |> Map.get("amount")
 
-  #   repayment_schedules = Repo.preload(loan, :loan_repayments)
+    schedules = LoanSchedule.list(loan.id, "active")
 
-  #   total_loan_amount = Enum.reduce(repayment_schedules, &calc_total_loan_amount/1)
+    with {:ok, {repaid_schedules, unpaid_schedules}} <- generate_repayments(schedules, amount),
+         {:ok, :ok} <- Repayment.add(repaid_schedules, params),
+         {:ok, :ok} <- LoanSchedule.update(repaid_schedules, params) do
+      case length(unpaid_schedules) == 0 do
+        true ->
+          update_loan(loan, %{status: "paid", closed_on: Date.utc_today()})
 
-  #   # if repayment_amount < total_loan_amount do
-  #   #   {:error, :repayment_amount_lower_than_loan_amount}
-  #   # else
-  #   #   repayment_schedule_attrs = %{
-  #   #     status: "paid",
-  #   #     meta: Map.merge(repayment_schedule.meta || %{}, params),
-  #   #     paid_on: DateTime.utc_now()
-  #   #   }
-
-  #   #   loan_attrs = %{
-  #   #     status: "paid",
-  #   #     closed_on: Date.utc_today()
-  #   #   }
-
-  #   #   with {:ok, _repayment} <-
-  #   #          update_repayment_schedule(repayment_schedule, repayment_schedule_attrs),
-  #   #        {:ok, loan} <- update_loan(loan, loan_attrs) do
-  #   #     {:ok, loan}
-  #   #   end
-  #   # end
-  # end
+        false ->
+          update_loan(loan, %{status: "partially_repaid"})
+      end
+    end
+  end
 
   def repay_loan(
         %Loan{status: "paid"},
@@ -428,29 +418,36 @@ defmodule Fundsjet.Loans do
     {:error, :error_reviewing_loan}
   end
 
-  defp calc_total_loan_amount(%LoanSchedule{} = schedule) do
-    Decimal.to_float(schedule.installment_amount) + Decimal.to_float(schedule.penalty_fee)
+  defp generate_repayments(unpaid_schedules, amount, repaid_schedules \\ []) when amount > 0 do
+    unpaid_schedules
+    |> gen_repayment_tx(amount, repaid_schedules)
   end
 
-  defp generate_repayments(schedules, amount, repayments \\ []) do
-    schedules
-    |> gen_repayment_tx(amount, repayments)
+  defp gen_repayment_tx([], _amount, repaid_schedules) do
+    {:ok, {repaid_schedules, []}}
   end
 
-  defp gen_repayment_tx([], _amount, repayments) do
-    {:ok, repayments, []}
+  defp gen_repayment_tx(
+         [%LoanSchedule{total_amount: total_amount} = schedule | unpaid_schedules],
+         amount,
+         repaid_schedules
+       )
+       when amount >= total_amount do
+    amount = amount - total_amount
+    schedule = %{schedule | repaid_amount: total_amount}
+
+    repaid_schedules = [schedule | repaid_schedules]
+    gen_repayment_tx(unpaid_schedules, amount, repaid_schedules)
   end
 
-  defp gen_repayment_tx([%LoanSchedule{installment_amount: install_amount} = schedule | schedules], amount, repayments) when amount >= install_amount do
-    new_amount = amount - calc_total_loan_amount(schedule)
-    repayment = %{loan_id: schedule.loan_id, schedule_id: schedule.id, amount: install_amount, paid: true }
-    repayments = [repayment | repayments]
-    gen_repayment_tx(schedules, new_amount, repayments)
-  end
-
-  defp gen_repayment_tx([%LoanSchedule{installment_amount: install_amount} = schedule | schedules], amount, repayments) when amount < install_amount do
-    repayment = %{loan_id: schedule.loan_id, schedule_id: schedule.id, amount: amount, paid: false }
-    repayments = [repayment | repayments]
-    {:ok, repayments, schedules}
+  defp gen_repayment_tx(
+         [%LoanSchedule{total_amount: total_amount} = schedule | unpaid_schedules],
+         amount,
+         repaid_schedules
+       )
+       when amount < total_amount do
+    schedule = %{schedule | repaid_amount: amount}
+    repaid_schedules = [schedule | repaid_schedules]
+    {:ok, {repaid_schedules, unpaid_schedules}}
   end
 end

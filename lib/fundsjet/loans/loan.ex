@@ -9,7 +9,8 @@ defmodule Fundsjet.Loans.Loan do
     "disbursed",
     "in_review",
     "approved",
-    "rejected"
+    "rejected",
+    "partially_repaid"
   ]
 
   @permitted [

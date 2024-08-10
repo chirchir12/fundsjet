@@ -41,11 +41,14 @@ defmodule Fundsjet.Loans.LoanSchedule do
     field :penalty_count, :integer
     field :meta, :map
 
+    # VIRTUAL
+    field :total_amount, :float, virtual: true
+    field :repaid_amount, :float, virtual: true
+
     timestamps(type: :utc_datetime)
     # loan_id
     belongs_to :loan, Loan
-    has_many :schedules, Fundsjet.Loans.Repayment
-
+    has_many :repayments, Fundsjet.Loans.Repayment
   end
 
   @doc false
@@ -58,7 +61,23 @@ defmodule Fundsjet.Loans.LoanSchedule do
 
   def list(loan_id) do
     query = from lr in __MODULE__, where: lr.loan_id == ^loan_id
+
     Repo.all(query)
+    |> Enum.map(&calc_total_loan_amount/1)
+  end
+
+  def list(loan_id, status) when status === "active" do
+    query = from lr in __MODULE__, where: lr.loan_id == ^loan_id and lr.status != "paid"
+
+    Repo.all(query)
+    |> Enum.map(&calc_total_loan_amount/1)
+  end
+
+  def list(loan_id, status) do
+    query = from lr in __MODULE__, where: lr.loan_id == ^loan_id and lr.status == ^status
+
+    Repo.all(query)
+    |> Enum.map(&calc_total_loan_amount/1)
   end
 
   def add(product, loan) do
@@ -76,7 +95,30 @@ defmodule Fundsjet.Loans.LoanSchedule do
     end)
   end
 
+  def update(schedules, params) when is_list(schedules) do
+    Repo.transaction(fn ->
+      attrs = %{
+        status: "paid",
+        paid_on: Map.get(params, "paid_on", DateTime.utc_now()),
+        updated_at: DateTime.utc_now(),
+        meta: params
+      }
 
+      schedules
+      |> Enum.each(fn schedule ->
+        case update_schedule(schedule, attrs) do
+          {:ok, _} -> :ok
+          {:error, changeset} -> Repo.rollback(changeset)
+        end
+      end)
+    end)
+  end
+
+  def update_schedule(schedule, attrs) do
+    schedule
+    |> changeset(attrs)
+    |> Repo.update()
+  end
 
   defp generate_schedules(%Product{} = product, %Loan{} = loan) do
     1..product.loan_term
@@ -89,5 +131,12 @@ defmodule Fundsjet.Loans.LoanSchedule do
         installment_date: Date.add(loan.disbursed_on, term * product.loan_duration)
       }
     end)
+  end
+
+  defp calc_total_loan_amount(%__MODULE__{} = schedule) do
+    total_amount =
+      Decimal.to_float(schedule.installment_amount) + Decimal.to_float(schedule.penalty_fee)
+
+    %{schedule | total_amount: total_amount}
   end
 end

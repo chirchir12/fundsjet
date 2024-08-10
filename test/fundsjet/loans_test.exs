@@ -319,7 +319,7 @@ defmodule Fundsjet.LoansTest do
 
       assert {:ok, %Loan{status: "in_review"} = loan} = Loans.get(loan.id)
 
-      assert {:ok, %Loan{status: "approved"}  = loan} = Loans.approve_loan(loan, approval_data)
+      assert {:ok, %Loan{status: "approved"} = loan} = Loans.approve_loan(loan, approval_data)
 
       assert {:ok, %Loan{status: "disbursed"} = loan} = Loans.disburse_loan(loan, today)
 
@@ -337,9 +337,121 @@ defmodule Fundsjet.LoansTest do
         assert schedule.status == "pending"
         assert schedule.penalty_fee == Decimal.new(0)
       end)
+    end
+
+    test "repay_loan/2 fully repay loan that is is either late or disbursed if full amount is passed", %{
+      customer: customer,
+      staff: staff
+    } do
+      product =
+        create_loan_product_fixture(%{
+          code: "testLoanProduct",
+          require_approval: true,
+          loan_term: 3
+        })
+      today = Date.utc_today()
+
+      review_data = %{
+        "status" => "approved",
+        "comment" => "customer can take loan"
+      }
+
+      approval_data = %{
+        "status" => "approved",
+        "updated_by" => staff.id,
+        "updated_at" => DateTime.utc_now()
+      }
+
+
+
+      # create loan
+      loan = loan_fixture(product, customer)
+
+
+      # create reviewer
+      assert {:ok, %LoanReview{} = review} = Loans.add_reviewer(loan, staff, 1)
+
+      # review loan
+      assert {:ok, %LoanReview{} } = Loans.add_review(loan, review, review_data)
+
+      assert {:ok, %Loan{status: "in_review"} = loan} = Loans.get(loan.id)
+
+      # approve loan
+      assert {:ok, %Loan{status: "approved"} = loan} = Loans.approve_loan(loan, approval_data)
+
+      # disburse loan
+      assert {:ok, %Loan{status: "disbursed"} = loan} = Loans.disburse_loan(loan, today)
+
+      schedules = LoanSchedule.list(loan.id, "active")
+      unpaid_amount = schedules |> Enum.reduce(0, fn (schedule, acc) -> schedule.total_amount + acc   end)
+
+      repayment_data = %{
+        "amount" => unpaid_amount,
+        "ref_id" => "ref_id",
+      }
+
+      assert {:ok, %Loan{status: "paid"}} = Loans.repay_loan(loan, repayment_data)
+      schedules = LoanSchedule.list(loan.id, "active")
+      assert length(schedules) == 0
 
     end
 
+    test "repay_loan/2 partially repay loan that is is either late or disbursed", %{
+      customer: customer,
+      staff: staff
+    } do
+      product =
+        create_loan_product_fixture(%{
+          code: "testLoanProduct",
+          require_approval: true,
+          loan_term: 3
+        })
+      today = Date.utc_today()
+
+      review_data = %{
+        "status" => "approved",
+        "comment" => "customer can take loan"
+      }
+
+      approval_data = %{
+        "status" => "approved",
+        "updated_by" => staff.id,
+        "updated_at" => DateTime.utc_now()
+      }
+
+
+
+      # create loan
+      loan = loan_fixture(product, customer)
+
+
+      # create reviewer
+      assert {:ok, %LoanReview{} = review} = Loans.add_reviewer(loan, staff, 1)
+
+      # review loan
+      assert {:ok, %LoanReview{} } = Loans.add_review(loan, review, review_data)
+
+      assert {:ok, %Loan{status: "in_review"} = loan} = Loans.get(loan.id)
+
+      # approve loan
+      assert {:ok, %Loan{status: "approved"} = loan} = Loans.approve_loan(loan, approval_data)
+
+      # disburse loan
+      assert {:ok, %Loan{status: "disbursed"} = loan} = Loans.disburse_loan(loan, today)
+
+      schedules = LoanSchedule.list(loan.id, "active")
+      unpaid_amount = schedules |> Enum.reduce(0, fn (schedule, acc) -> schedule.total_amount + acc   end)
+
+      repayment_data = %{
+        "amount" => unpaid_amount/2,
+        "ref_id" => "ref_id",
+      }
+
+      assert {:ok, %Loan{status: "partially_repaid"}} = Loans.repay_loan(loan, repayment_data)
+      schedules = LoanSchedule.list(loan.id, "active")
+      assert length(schedules) > 0
+
+    end
 
     test "create_loan/3 throws error when customer is disabled", %{
       product: product,
