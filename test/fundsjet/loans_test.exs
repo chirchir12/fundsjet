@@ -204,7 +204,7 @@ defmodule Fundsjet.LoansTest do
       assert loan.product_id == product.id
       assert loan.amount == Decimal.new(loan_amount)
       assert loan.commission == Decimal.from_float(commission)
-      assert loan.maturity_date == Date.add(today, product.loan_duration)
+      assert loan.maturity_date == Date.add(today, product.loan_duration * product.loan_term)
       assert loan.duration == product.loan_duration
       assert loan.disbursed_on == today
       assert loan.closed_on == nil

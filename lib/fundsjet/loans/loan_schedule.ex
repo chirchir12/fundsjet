@@ -42,8 +42,10 @@ defmodule Fundsjet.Loans.LoanSchedule do
     field :meta, :map
 
     # VIRTUAL
-    field :total_amount, :float, virtual: true
-    field :repaid_amount, :float, virtual: true
+    field :total_amount, :float, virtual: true # installment_amount + penalties
+    field :remaining_amount, :float, virtual: true # total_amount - total_repaid_amount
+    field :repaid_amount, :float, virtual: true #current amount being repaid
+    field :total_repaid_amount, :float, virtual: true #sum of repayments
 
     timestamps(type: :utc_datetime)
     # loan_id
@@ -63,21 +65,31 @@ defmodule Fundsjet.Loans.LoanSchedule do
     query = from lr in __MODULE__, where: lr.loan_id == ^loan_id
 
     Repo.all(query)
+    |> Repo.preload(:repayments)
     |> Enum.map(&calc_total_loan_amount/1)
+    |> Enum.map(&calc_total_repaid_amount/1)
+    |> Enum.map(&cacl_remaining_amount/1)
   end
 
   def list(loan_id, status) when status === "active" do
     query = from lr in __MODULE__, where: lr.loan_id == ^loan_id and lr.status != "paid"
 
     Repo.all(query)
+    |> Repo.preload(:repayments)
     |> Enum.map(&calc_total_loan_amount/1)
+    |> Enum.map(&calc_total_repaid_amount/1)
+    |> Enum.map(&cacl_remaining_amount/1)
+    |> IO.inspect()
   end
 
   def list(loan_id, status) do
     query = from lr in __MODULE__, where: lr.loan_id == ^loan_id and lr.status == ^status
 
     Repo.all(query)
+    |> Repo.preload(:repayments)
     |> Enum.map(&calc_total_loan_amount/1)
+    |> Enum.map(&calc_total_repaid_amount/1)
+    |> Enum.map(&cacl_remaining_amount/1)
   end
 
   def add(product, loan) do
@@ -105,6 +117,7 @@ defmodule Fundsjet.Loans.LoanSchedule do
       }
 
       schedules
+      |> Enum.filter(fn schedule -> schedule.remaining_amount == schedule.repaid_amount  end)
       |> Enum.each(fn schedule ->
         case update_schedule(schedule, attrs) do
           {:ok, _} -> :ok
@@ -138,5 +151,19 @@ defmodule Fundsjet.Loans.LoanSchedule do
       Decimal.to_float(schedule.installment_amount) + Decimal.to_float(schedule.penalty_fee)
 
     %{schedule | total_amount: total_amount}
+  end
+
+  defp calc_total_repaid_amount(%__MODULE__{repayments: repayments} = schedule) when length(repayments) >0 do
+    total_amount = repayments |> Enum.reduce(0, fn (repayment, acc) -> Decimal.to_float(repayment.amount) + acc  end)
+    %{schedule | total_repaid_amount: total_amount}
+  end
+
+  defp calc_total_repaid_amount(schedule) do
+    %{schedule | total_repaid_amount: 0}
+  end
+
+  defp cacl_remaining_amount(%__MODULE__{} = schedule) do
+    remaining_amount = schedule.total_amount - schedule.total_repaid_amount
+    %{schedule | remaining_amount: remaining_amount}
   end
 end

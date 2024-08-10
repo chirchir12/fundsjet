@@ -101,7 +101,7 @@ defmodule Fundsjet.Loans do
     iex> get("invalid_id")
     {:error, :loan_not_found}
   """
-  def get(id) when is_integer(id) do
+  def get(id) do
     case Repo.get(Loan, id) do
       nil ->
         {:error, :loan_not_found}
@@ -111,9 +111,6 @@ defmodule Fundsjet.Loans do
     end
   end
 
-  def get(_) do
-    {:error, :loan_not_found}
-  end
 
   @doc """
   Creates a loan for a given product and customer if the customer is enabled.
@@ -252,7 +249,7 @@ defmodule Fundsjet.Loans do
         disbursement_date
       ) do
     loan_attrs = %{
-      maturity_date: Date.add(disbursement_date, loan.duration),
+      maturity_date: Date.add(disbursement_date, loan.duration * loan.term),
       disbursed_on: disbursement_date,
       status: "disbursed"
     }
@@ -276,8 +273,12 @@ defmodule Fundsjet.Loans do
     {:error, :cannot_disburse_rejected_loan}
   end
 
+  def disburse_loan(_loan, _disbursement_date) do
+    {:error, :error_disbursing_loan}
+  end
+
   def repay_loan(%Loan{status: status} = loan, params)
-      when status in ["late", "disbursed"] do
+      when status in ["late", "disbursed", "partially_repaid"] do
     amount = params |> Map.get("amount")
 
     schedules = LoanSchedule.list(loan.id, "active")
@@ -295,19 +296,11 @@ defmodule Fundsjet.Loans do
     end
   end
 
-  def repay_loan(
-        %Loan{status: "paid"},
-        _schedule,
-        _params
-      ) do
+  def repay_loan(%Loan{status: "paid"}, _params) do
     {:error, :loan_already_repaid}
   end
 
-  def repay_loan(
-        _loan,
-        _schedule,
-        _params
-      ) do
+  def repay_loan( _loan, _params) do
     {:error, :error_repaying_loan}
   end
 
@@ -354,7 +347,7 @@ defmodule Fundsjet.Loans do
     if product.require_approval do
       nil
     else
-      Date.add(disbursed_on, product.loan_duration)
+      Date.add(disbursed_on, product.loan_duration * product.loan_term)
     end
   end
 
@@ -428,26 +421,27 @@ defmodule Fundsjet.Loans do
   end
 
   defp gen_repayment_tx(
-         [%LoanSchedule{total_amount: total_amount} = schedule | unpaid_schedules],
+         [%LoanSchedule{remaining_amount: remaining_amount} = schedule | unpaid_schedules],
          amount,
          repaid_schedules
        )
-       when amount >= total_amount do
-    amount = amount - total_amount
-    schedule = %{schedule | repaid_amount: total_amount}
+       when amount >= remaining_amount do
+    amount = amount - remaining_amount
+    schedule = %{schedule | repaid_amount: remaining_amount}
 
     repaid_schedules = [schedule | repaid_schedules]
     gen_repayment_tx(unpaid_schedules, amount, repaid_schedules)
   end
 
   defp gen_repayment_tx(
-         [%LoanSchedule{total_amount: total_amount} = schedule | unpaid_schedules],
+         [%LoanSchedule{remaining_amount: remaining_amount} = schedule | unpaid_schedules],
          amount,
          repaid_schedules
        )
-       when amount < total_amount do
+       when amount < remaining_amount do
     schedule = %{schedule | repaid_amount: amount}
     repaid_schedules = [schedule | repaid_schedules]
+    unpaid_schedules = [schedule | unpaid_schedules] # it was not fully repaid
     {:ok, {repaid_schedules, unpaid_schedules}}
   end
 end

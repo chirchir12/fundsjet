@@ -46,7 +46,6 @@ defmodule Fundsjet.Products.Product do
     :require_approval,
     :require_docs,
     :automatic_disbursement,
-    :disbursement_fee,
     :loan_duration,
     :loan_term,
     :loan_comission,

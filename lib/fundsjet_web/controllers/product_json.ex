@@ -40,7 +40,17 @@ defmodule FundsjetWeb.ProductJSON do
       require_docs: product.require_docs,
       approval_meta: product.approval_meta,
       documents_meta: product.documents_meta,
-      additional_info: product.additional_info
+      additional_info: product.additional_info,
+      disbursement_fee: product.disbursement_fee,
+      loan_comission: product.loan_comission,
+      loan_duration: product.loan_duration,
+      loan_penalty: product.loan_penalty,
+      penalty_type: product.penalty_type,
+      penalty_duration: product.penalty_duration,
+      penalty_after: product.penalty_after,
+      loan_term: product.loan_term,
+      description: product.description
+
     }
   end
 

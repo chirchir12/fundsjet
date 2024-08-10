@@ -2,7 +2,6 @@ defmodule FundsjetWeb.LoanController do
   use FundsjetWeb, :controller
 
   alias Fundsjet.Loans
-  alias Fundsjet.Loans.{Loan}
   alias Fundsjet.Identity.{User, Users}
   alias Fundsjet.Products
   alias Fundsjet.Customers
@@ -17,9 +16,9 @@ defmodule FundsjetWeb.LoanController do
     render(conn, :index, loans: loans)
   end
 
-  def create(conn, %{"params" => params}) do
+  def create(conn, %{"product_id" => product_id, "params" => params}) do
     with %User{id: current_user_id} <- conn.assigns[:auth_user],
-         {:ok, product} <- Products.get(:code, "loanProduct"),
+         {:ok, product} <- Products.get(product_id),
          {:ok, %Customer{id: customer_id} = customer} <-
            Customers.get(:uuid, Map.get(params, "customer_id")),
          params <- Map.put(params, "created_by", current_user_id),
@@ -33,14 +32,6 @@ defmodule FundsjetWeb.LoanController do
 
   def show(conn, %{"id" => id}) do
     with {:ok, loan} <- Loans.get(id) do
-      conn
-      |> render(:show, loan: loan)
-    end
-  end
-
-  def update(conn, %{"id" => id, "params" => params}) do
-    with {:ok, loan} <- Loans.get(id),
-         {:ok, %Loan{} = loan} <- Loans.update_loan(loan, params) do
       conn
       |> render(:show, loan: loan)
     end
@@ -103,13 +94,13 @@ defmodule FundsjetWeb.LoanController do
 
   def repay_loan(conn, %{"id" => loan_id, "params" => params}) do
     with {:ok, loan} <- Loans.get(loan_id),
-         {:ok, repayment_schedule} <- Loans.get_repayment_schedule(loan_id),
-         {:ok, loan} <- Loans.repay_loan(loan, repayment_schedule, params) do
+         {:ok, loan} <- Loans.repay_loan(loan, params) do
       conn
       |> put_status(:ok)
       |> render(:show, loan: loan)
     end
   end
+
 
   defp parse_date(date) when is_binary(date) do
     Date.from_iso8601(date)
