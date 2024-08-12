@@ -383,7 +383,7 @@ defmodule Fundsjet.LoansTest do
       assert {:ok, %Loan{status: "disbursed"} = loan} = Loans.disburse_loan(loan, today)
 
       schedules = LoanSchedule.list(loan.id, "active")
-      unpaid_amount = schedules |> Enum.reduce(0, fn (schedule, acc) -> schedule.total_amount + acc   end)
+      unpaid_amount = schedules |> Enum.reduce(0, fn (schedule, acc) -> schedule.remaining_amount + acc   end)
 
       repayment_data = %{
         "amount" => unpaid_amount,
@@ -440,16 +440,30 @@ defmodule Fundsjet.LoansTest do
       assert {:ok, %Loan{status: "disbursed"} = loan} = Loans.disburse_loan(loan, today)
 
       schedules = LoanSchedule.list(loan.id, "active")
-      unpaid_amount = schedules |> Enum.reduce(0, fn (schedule, acc) -> schedule.total_amount + acc   end)
+      unpaid_amount = schedules |> Enum.reduce(0, fn (schedule, acc) -> schedule.remaining_amount + acc   end)
+      amount_to_pay = unpaid_amount / 3
 
       repayment_data = %{
-        "amount" => unpaid_amount/2,
+        "amount" => amount_to_pay,
         "ref_id" => "ref_id",
       }
 
+
+      # first payment
       assert {:ok, %Loan{status: "partially_repaid"}} = Loans.repay_loan(loan, repayment_data)
       schedules = LoanSchedule.list(loan.id, "active")
-      assert length(schedules) > 0
+      assert length(schedules) === 2
+
+      # second payment
+      assert {:ok, %Loan{status: "partially_repaid"}} = Loans.repay_loan(loan, repayment_data)
+      schedules = LoanSchedule.list(loan.id, "active")
+      assert length(schedules) === 1
+
+      # third payment
+      assert {:ok, %Loan{status: "paid"}} = Loans.repay_loan(loan, repayment_data)
+      schedules = LoanSchedule.list(loan.id, "active")
+      assert length(schedules) === 0
+
 
     end
 

@@ -20,7 +20,6 @@ defmodule Fundsjet.Loans.Repayment do
     repayment
     |> cast(attrs, [:amount, :paid_on, :ref_id, :meta, :loan_id, :loan_schedule_id])
     |> validate_required([:amount, :paid_on, :loan_id, :meta, :loan_schedule_id])
-    |> validate_number(:amount, greater_than: 0)
   end
 
   def add(schedules, params) when length(schedules) > 0 do
@@ -37,13 +36,15 @@ defmodule Fundsjet.Loans.Repayment do
 
         case Repo.insert(changeset) do
           {:ok, _} -> {:ok, :ok}
-          {:error, changeset} -> Repo.rollback(changeset)
+          {:error, changeset} ->
+            Repo.rollback(changeset)
         end
       end)
     end)
   end
 
   defp repayment(%LoanSchedule{} = schedule, params) do
+
     %{
       loan_id: schedule.loan_id,
       loan_schedule_id: schedule.id,
