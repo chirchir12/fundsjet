@@ -48,7 +48,8 @@ defmodule Fundsjet.ProductsFixtures do
         loan_penalty: 5,
         penalty_type: "percent",
         penalty_duration: 100,
-        penalty_after: 5
+        penalty_after: 5,
+        max_allowed_active_loans: 1
       })
       |> Fundsjet.Products.create()
 

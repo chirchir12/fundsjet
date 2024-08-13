@@ -20,7 +20,6 @@ defmodule Fundsjet.Products.Product do
     :created_by,
     :require_approval,
     :require_docs,
-    :automatic_disbursement,
     # specific to loan
     :disbursement_fee,
     :loan_duration,
@@ -33,7 +32,9 @@ defmodule Fundsjet.Products.Product do
     :penalty_after,
     :approval_meta,
     :documents_meta,
-    :additional_info
+    :additional_info,
+    :automatic_disbursement,
+    :max_allowed_active_loans
   ]
   @required [
     :code,
@@ -53,7 +54,8 @@ defmodule Fundsjet.Products.Product do
     :loan_penalty,
     :penalty_type,
     :penalty_duration,
-    :penalty_after
+    :penalty_after,
+    :max_allowed_active_loans
   ]
 
   schema "products" do
@@ -82,6 +84,7 @@ defmodule Fundsjet.Products.Product do
     field :penalty_type, :string
     field :penalty_duration, :integer
     field :penalty_after, :integer
+    field :max_allowed_active_loans, :integer
 
     # meta
     field :approval_meta, {:array, :map}

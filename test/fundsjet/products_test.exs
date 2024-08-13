@@ -83,7 +83,8 @@ defmodule Fundsjet.ProductsTest do
         "loan_penalty" => 5,
         "penalty_type" => "percent",
         "penalty_duration" => 100,
-        "penalty_after" => 5
+        "penalty_after" => 5,
+        "max_allowed_active_loans" => 1
       }
 
       assert {:ok, %Product{} = product} = Products.create(valid_attrs)
@@ -108,6 +109,7 @@ defmodule Fundsjet.ProductsTest do
       assert product.penalty_type == "percent"
       assert product.penalty_duration == 100
       assert product.penalty_after == 5
+      assert product.max_allowed_active_loans == 1
     end
 
     test "create_product/1 throws error is loan_duration is missing for type loans" do
@@ -130,7 +132,8 @@ defmodule Fundsjet.ProductsTest do
         "loan_penalty" => 5,
         "penalty_type" => "percent",
         "penalty_duration" => 100,
-        "penalty_after" => 5
+        "penalty_after" => 5,
+        "max_allowed_active_loans" => 1
       }
 
       assert {:error, %Changeset{}} = Products.create(valid_attrs)
@@ -156,7 +159,8 @@ defmodule Fundsjet.ProductsTest do
         "loan_penalty" => 5,
         "penalty_type" => "percent",
         "penalty_duration" => 100,
-        "penalty_after" => 5
+        "penalty_after" => 5,
+        "max_allowed_active_loans" => 1
       }
 
       assert {:error, %Changeset{}} = Products.create(valid_attrs)
@@ -182,7 +186,8 @@ defmodule Fundsjet.ProductsTest do
         "loan_penalty" => 5,
         "penalty_type" => "percent",
         "penalty_duration" => 100,
-        "penalty_after" => 5
+        "penalty_after" => 5,
+        "max_allowed_active_loans" => 1
       }
 
       assert {:error, %Changeset{}} = Products.create(valid_attrs)
@@ -208,7 +213,8 @@ defmodule Fundsjet.ProductsTest do
         "loan_penalty" => 5,
         "penalty_type" => "percent",
         "penalty_duration" => 100,
-        "penalty_after" => 5
+        "penalty_after" => 5,
+        "max_allowed_active_loans" => 1
       }
 
       assert {:error, %Changeset{}} = Products.create(valid_attrs)
@@ -234,7 +240,8 @@ defmodule Fundsjet.ProductsTest do
         # "loan_penalty" => 5,
         "penalty_type" => "percent",
         "penalty_duration" => 100,
-        "penalty_after" => 5
+        "penalty_after" => 5,
+        "max_allowed_active_loans" => 1
       }
 
       assert {:error, %Changeset{}} = Products.create(valid_attrs)
@@ -260,7 +267,8 @@ defmodule Fundsjet.ProductsTest do
         "loan_penalty" => 5,
         # "penalty_type" => "percent",
         "penalty_duration" => 100,
-        "penalty_after" => 5
+        "penalty_after" => 5,
+        "max_allowed_active_loans" => 1
       }
 
       assert {:error, %Changeset{}} = Products.create(valid_attrs)
@@ -285,7 +293,8 @@ defmodule Fundsjet.ProductsTest do
         "commission_type" => "percent",
         "loan_penalty" => 5,
         "penalty_type" => "percent",
-        "penalty_duration" => 100
+        "penalty_duration" => 100,
+        "max_allowed_active_loans" => 1
         # "penalty_after" => 5
       }
 

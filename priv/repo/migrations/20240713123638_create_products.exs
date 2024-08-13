@@ -22,6 +22,7 @@ defmodule Fundsjet.Repo.Migrations.CreateProducts do
       add :disbursement_fee, :decimal
       add :loan_duration, :integer
       add :loan_term, :integer
+      add :max_allowed_active_loans, :integer
       add :loan_comission, :decimal
       add :commission_type, :string
       add :loan_penalty, :decimal
